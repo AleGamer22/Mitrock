@@ -7,7 +7,8 @@
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #ecf0f1;
+            background-color: #1e1e1e; /* Fondo oscuro */
+            color: #d4d4d4; /* Texto claro */
             margin: 0;
             display: flex;
             justify-content: center;
@@ -18,21 +19,21 @@
         #chat-container {
             width: 90%;
             max-width: 500px;
-            background-color: #fff;
+            background-color: #252526; /* Contenedor oscuro */
             border-radius: 8px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5); /* Sombra para contraste */
             overflow: hidden;
             display: flex;
             flex-direction: column;
         }
 
         #chat-header {
-            background-color: #2c3e50;
-            color: white;
+            background-color: #3b3b3b; /* Header más oscuro */
+            color: #f0f0f0;
             padding: 20px;
             text-align: center;
             font-size: 1.7em;
-            border-bottom: 1px solid #ddd;
+            border-bottom: 1px solid #4d4d4d; /* Borde sutil */
         }
 
         #chat-log {
@@ -40,7 +41,7 @@
             padding: 20px;
             overflow-y: auto;
             scrollbar-width: thin;
-            scrollbar-color: #888 #f4f4f4;
+            scrollbar-color: #555 #252526; /* Scrollbar oscuro */
             display: flex;
             flex-direction: column;
         }
@@ -50,17 +51,17 @@
         }
 
         #chat-log::-webkit-scrollbar-track {
-            background: #f4f4f4;
+            background: #252526;
             border-radius: 4px;
         }
 
         #chat-log::-webkit-scrollbar-thumb {
-            background-color: #888;
+            background-color: #555;
             border-radius: 4px;
         }
 
         #chat-log::-webkit-scrollbar-thumb:hover {
-            background-color: #555;
+            background-color: #777;
         }
 
         .message-container {
@@ -82,28 +83,29 @@
 
         .user-message {
             align-self: flex-end;
-            background-color: #a2ed56;
-            color: #333;
+            background-color: #4CAF50; /* Verde más oscuro */
+            color: #f0f0f0;
             padding: 12px;
             border-radius: 8px 8px 0 8px;
             margin-left: 30%;
             word-break: break-word;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
         }
 
         .bot-message {
             align-self: flex-start;
-            background-color: #87ceeb;
-            color: #333;
+            background-color: #2196F3; /* Azul más oscuro */
+            color: #f0f0f0;
             padding: 12px;
             border-radius: 8px 8px 8px 0;
             margin-right: 30%;
             word-break: break-word;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
         }
 
         .bot-message.typing {
-            background-color: #f0f0f0;
+            background-color: #3b3b3b; /* Indicador de escritura oscuro */
+            color: #d4d4d4;
             opacity: 1;
         }
 
@@ -135,7 +137,7 @@
         }
 
         .error-message {
-            color: #e74c3c;
+            color: #f44336; /* Rojo más oscuro */
             font-style: italic;
             text-align: center;
             margin-top: 10px;
@@ -143,23 +145,30 @@
 
         #input-area {
             padding: 15px;
-            border-top: 1px solid #ddd;
+            border-top: 1px solid #4d4d4d; /* Borde oscuro */
             display: flex;
             align-items: center;
+            background-color: #252526; /* Fondo oscuro para el input area */
         }
 
         #user-input {
             flex-grow: 1;
             padding: 10px;
-            border: 1px solid #ccc;
+            border: 1px solid #5e5e5e; /* Borde oscuro para el input */
             border-radius: 5px;
             margin-right: 10px;
             font-size: 1em;
+            background-color: #3b3b3b; /* Fondo oscuro para el input */
+            color: #d4d4d4;
+        }
+
+        #user-input::placeholder {
+            color: #8a8a8a; /* Placeholder más claro */
         }
 
         button {
-            background-color: #3498db;
-            color: white;
+            background-color: #5e5e5e; /* Botón oscuro */
+            color: #f0f0f0;
             border: none;
             border-radius: 5px;
             padding: 10px 15px;
@@ -169,25 +178,25 @@
         }
 
         button:hover {
-            background-color: #2980b9;
+            background-color: #777; /* Botón más claro al pasar el ratón */
             transform: scale(1.05);
         }
 
         #typing-indicator {
             align-self: flex-start;
-            background-color: #f0f0f0;
-            color: #333;
+            background-color: #3b3b3b; /* Indicador de escritura oscuro */
+            color: #d4d4d4;
             padding: 12px;
             border-radius: 8px 8px 8px 0;
             margin-right: 30%;
             word-break: break-word;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
-            opacity: 0; /* Inicialmente oculto */
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+            opacity: 0;
             transition: opacity 0.3s ease-in-out;
         }
 
         #typing-indicator.active {
-            opacity: 1; /* Se muestra cuando está activo */
+            opacity: 1;
         }
 
         #typing-indicator.active span {
