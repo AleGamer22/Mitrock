@@ -172,6 +172,41 @@
             background-color: #2980b9;
             transform: scale(1.05);
         }
+
+        #typing-indicator {
+            align-self: flex-start;
+            background-color: #f0f0f0;
+            color: #333;
+            padding: 12px;
+            border-radius: 8px 8px 8px 0;
+            margin-right: 30%;
+            word-break: break-word;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+            opacity: 0; /* Inicialmente oculto */
+            transition: opacity 0.3s ease-in-out;
+        }
+
+        #typing-indicator.active {
+            opacity: 1; /* Se muestra cuando está activo */
+        }
+
+        #typing-indicator.active span {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            background-color: #888;
+            border-radius: 50%;
+            margin-right: 5px;
+            animation: typing-dots 1.4s infinite ease-in-out;
+        }
+
+        #typing-indicator.active span:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        #typing-indicator.active span:nth-child(3) {
+            animation-delay: 0.4s;
+        }
     </style>
 </head>
 <body>
@@ -217,7 +252,7 @@
                 appendMessage("user", message);
                 userInput.value = "";
 
-                typingIndicator.classList.add("active");
+                typingIndicator.classList.add("active"); // Mostrar la animación
 
                 try {
                     const response = await fetch("/api/chat", {
@@ -228,7 +263,7 @@
                         body: JSON.stringify({ message: message })
                     });
 
-                    typingIndicator.classList.remove("active");
+                    typingIndicator.classList.remove("active"); // Ocultar la animación
 
                     if (!response.ok) {
                         appendMessage("error", `Error del servidor: ${response.statusText}`);
@@ -245,7 +280,7 @@
                     }
 
                 } catch (error) {
-                    typingIndicator.classList.remove("active");
+                    typingIndicator.classList.remove("active"); // Ocultar en caso de error
                     appendMessage("error", `Error de conexión: ${error.message}`);
                 }
             }
