@@ -54,15 +54,15 @@ def chat():
         params = {
             "key": GEMINI_API_KEY
         }
-      data = {
-        "contents": [
-            {
-                "parts": [
-                    {"text": prompt_with_language}
-                ]
-            }
-        ]
-    }
+        data = {
+            "contents": [
+                {
+                    "parts": [
+                        {"text": prompt_with_language}
+                    ]
+                }
+            ]
+        }
         try:
             response = requests.post(GEMINI_API_URL, headers=headers, params=params, json=data)
             response.raise_for_status()
