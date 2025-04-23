@@ -135,10 +135,11 @@
             messageContainer.classList.add("message-container");
             const messageDiv = document.createElement("div");
             messageDiv.classList.add(`${sender}-message`);
-            messageDiv.textContent = text;
+            messageDiv.innerHTML = text; // Usamos innerHTML para renderizar HTML
             messageContainer.appendChild(messageDiv);
             chatLog.appendChild(messageContainer);
-            chatLog.scrollTop = chatLog.scrollHeight; // Auto-scroll al final
+            chatLog.scrollTop = chatLog.scrollHeight;
+}
         }
 
         async function sendMessage() {
