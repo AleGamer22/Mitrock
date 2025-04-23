@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chatbot Local con Gemini Flash</title>
+    <title>Mitrock IA</title>
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -113,11 +113,11 @@
 <body>
     <div id="chat-container">
         <div id="chat-header">
-            Chat con Gemini Flash
+            Mitrock IA
         </div>
         <div id="chat-log">
             <div class="message-container">
-                <div class="bot-message">¡Hola! ¿En qué puedo ayudarte hoy?</div>
+                <div class="bot-message">Envia un mensaje para empezar!</div>
             </div>
         </div>
         <div id="input-area">
@@ -135,10 +135,10 @@
             messageContainer.classList.add("message-container");
             const messageDiv = document.createElement("div");
             messageDiv.classList.add(`${sender}-message`);
-            messageDiv.innerHTML = text; // Usamos innerHTML para renderizar HTML
+            messageDiv.textContent = text;
             messageContainer.appendChild(messageDiv);
             chatLog.appendChild(messageContainer);
-            chatLog.scrollTop = chatLog.scrollHeight;
+            chatLog.scrollTop = chatLog.scrollHeight; // Auto-scroll al final
         }
 
         async function sendMessage() {
@@ -175,6 +175,7 @@
             }
         }
 
+        // Permitir enviar el mensaje al presionar Enter en el input
         userInput.addEventListener("keypress", function(event) {
             if (event.key === "Enter") {
                 sendMessage();
