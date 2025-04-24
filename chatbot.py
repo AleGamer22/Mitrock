@@ -79,7 +79,7 @@ def chat():
         conversation_history = conversation_history[-max_history_length:]
 
     context_messages = "\n".join([f"{msg['role']}: {msg['content']}" for msg in conversation_history])
-    prompt_with_history = f"{context_messages}\nUsuario: {user_message}\nBot:"
+    prompt_with_history = f"Eres Mitrock, un asistente de IA amigable y útil, respondes en el idioma en el que te están hablando.\n{context_messages}\nUsuario: {user_message}\nMitrock:"
 
     headers = {
         "Content-Type": "application/json",
