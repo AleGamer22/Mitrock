@@ -235,7 +235,7 @@
             /* Hereda estilos generales del botón */
         }
 
-        /* Estilos para la marca de agua */
+         /* Estilos para la marca de agua */
         #watermark {
             position: absolute;
             bottom: 10px;
@@ -247,6 +247,11 @@
         #watermark img {
             max-width: 100px; /* Ajusta el tamaño del logo */
             height: auto;
+            /* AÑADE ESTAS LÍNEAS PARA HACER EL LOGO CIRCULAR */
+            border-radius: 50%;
+            object-fit: cover; /* Recorta la imagen para que se ajuste al círculo sin deformarse */
+            width: 100px;    /* Asegura que el ancho y la altura sean iguales */
+            height: 100px;   /* para formar un círculo perfecto */
         }
     </style>
 </head>
