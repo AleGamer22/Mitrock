@@ -45,6 +45,8 @@
             scrollbar-color: #555 #252526;
             display: flex;
             flex-direction: column;
+            padding-bottom: 60px;
+            position: relative;
         }
 
         #chat-log::-webkit-scrollbar {
@@ -183,7 +185,9 @@
         }
 
         #typing-indicator {
-            align-self: flex-start;
+            position: absolute;
+            bottom: 10px;
+            left: 20px;
             background-color: #383838;
             color: #d4d4d4;
             padding: 12px;
@@ -216,6 +220,28 @@
         #typing-indicator.active span:nth-child(3) {
             animation-delay: 0.4s;
         }
+
+        @keyframes typing-dots {
+            0%, 80%, 100% {
+                transform: scale(0);
+            }
+            40% {
+                transform: scale(1);
+            }
+        }
+
+        #chat-buttons {
+            padding: 10px;
+            text-align: center;
+            border-top: 1px solid #4d4d4d;
+            background-color: #252526;
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
+
+        #chat-buttons button {
+        }
     </style>
 </head>
 <body>
@@ -237,8 +263,9 @@
             <input type="text" id="user-input" placeholder="Escribe tu mensaje y presiona Enter...">
             <button onclick="sendMessage()">Enviar</button>
         </div>
-        <div style="padding: 10px; text-align: center; border-top: 1px solid #4d4d4d; background-color: #252526;">
+        <div id="chat-buttons">
             <button onclick="resetChat()">Reiniciar IA</button>
+            <button onclick="regenerateResponse()">Regenerar Respuesta</button>
         </div>
     </div>
 
@@ -246,6 +273,8 @@
         const userInput = document.getElementById("user-input");
         const chatLog = document.getElementById("chat-log");
         const typingIndicator = document.getElementById("typing-indicator");
+
+        let conversationHistory = [];
 
         function appendMessage(sender, text) {
             const messageContainer = document.createElement("div");
@@ -256,6 +285,7 @@
             messageContainer.appendChild(messageDiv);
             chatLog.appendChild(messageContainer);
             chatLog.scrollTop = chatLog.scrollHeight;
+            conversationHistory.push({ role: sender, content: text });
         }
 
         async function sendMessage() {
@@ -263,7 +293,6 @@
             if (message) {
                 appendMessage("user", message);
                 userInput.value = "";
-
                 typingIndicator.classList.add("active");
 
                 try {
@@ -309,9 +338,45 @@
             if (response.ok) {
                 chatLog.innerHTML = '<div class="message-container"><div class="bot-message">Chat reiniciado. Envia un mensaje para empezar!</div></div><div id="typing-indicator" class="bot-message typing"><span></span><span></span><span></span></div>';
                 typingIndicator = document.getElementById("typing-indicator");
+                conversationHistory = [];
             } else {
                 const errorData = await response.json();
                 appendMessage("error", `Error al reiniciar el chat: ${errorData.error || 'Error desconocido'}`);
+            }
+        }
+
+        async function regenerateResponse() {
+            if (conversationHistory.length > 1 && conversationHistory[conversationHistory.length - 1].role === 'bot') {
+                const lastUserMessage = conversationHistory[conversationHistory.length - 2].content;
+                typingIndicator.classList.add("active");
+                try {
+                    const response = await fetch("/api/regenerate", {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json"
+                        },
+                        body: JSON.stringify({ message: lastUserMessage })
+                    });
+                    typingIndicator.classList.remove("active");
+                    if (response.ok) {
+                        const data = await response.json();
+                        if (data.response) {
+                            chatLog.removeChild(chatLog.lastElementChild);
+                            appendMessage("bot", data.response);
+                        } else if (data.error) {
+                            appendMessage("error", `Error al regenerar: ${data.error}`);
+                        } else {
+                            appendMessage("error", "Respuesta inesperada al regenerar.");
+                        }
+                    } else {
+                        appendMessage("error", `Error del servidor al regenerar: ${response.statusText}`);
+                    }
+                } catch (error) {
+                    typingIndicator.classList.remove("active");
+                    appendMessage("error", `Error de conexión al regenerar: ${error.message}`);
+                }
+            } else {
+                appendMessage("error", "No hay respuesta del bot para regenerar.");
             }
         }
 
@@ -323,6 +388,14 @@
 
         window.onload = function() {
             userInput.focus();
+            if (!document.getElementById('typing-indicator')) {
+                const typingDiv = document.createElement('div');
+                typingDiv.id = 'typing-indicator';
+                typingDiv.className = 'bot-message typing';
+                typingDiv.innerHTML = '<span></span><span></span><span></span>';
+                chatLog.appendChild(typingDiv);
+                typingIndicator = typingDiv;
+            }
         };
     </script>
 </body>
