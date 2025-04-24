@@ -7,8 +7,8 @@
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #1e1e1e; /* Fondo oscuro */
-            color: #d4d4d4; /* Texto claro */
+            background-color: #1e1e1e; /* Gris oscuro casi negro */
+            color: #d4d4d4; /* Gris claro para el texto general */
             margin: 0;
             display: flex;
             justify-content: center;
@@ -18,28 +18,30 @@
 
         #chat-container {
             width: 90%;
-            max-width: 500px;
-            background-color: #252526; /* Contenedor oscuro */
+            /* max-width: 500px; */ /* Comentamos el ancho anterior */
+            max-width: 600px; /* Nuevo ancho máximo */
+            background-color: #252526; /* Gris oscuro */
             border-radius: 8px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5); /* Sombra para contraste */
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5); /* Sombra más pronunciada */
             overflow: hidden;
             display: flex;
             flex-direction: column;
+            max-height: 80vh; /* Nueva altura máxima para el contenedor */
         }
 
         #chat-header {
-            background-color: #3b3b3b; /* Header más oscuro */
-            color: #f0f0f0;
+            background-color: #3f3f46; /* Gris más claro para el header */
+            color: #d4d4d4;
             padding: 20px;
             text-align: center;
             font-size: 1.7em;
-            border-bottom: 1px solid #4d4d4d; /* Borde sutil */
+            border-bottom: 1px solid #4d4d4d; /* Borde más oscuro */
         }
 
         #chat-log {
             flex-grow: 1;
             padding: 20px;
-            overflow-y: auto;
+            overflow-y: auto; /* Habilitar el scroll vertical cuando el contenido excede la altura */
             scrollbar-width: thin;
             scrollbar-color: #555 #252526; /* Scrollbar oscuro */
             display: flex;
@@ -83,7 +85,7 @@
 
         .user-message {
             align-self: flex-end;
-            background-color: #4CAF50; /* Verde más oscuro */
+            background-color: #5086ad; /* Azul oscuro para el usuario */
             color: #f0f0f0;
             padding: 12px;
             border-radius: 8px 8px 0 8px;
@@ -94,8 +96,8 @@
 
         .bot-message {
             align-self: flex-start;
-            background-color: #2196F3; /* Azul más oscuro */
-            color: #f0f0f0;
+            background-color: #383838; /* Gris oscuro para el bot */
+            color: #d4d4d4;
             padding: 12px;
             border-radius: 8px 8px 8px 0;
             margin-right: 30%;
@@ -104,8 +106,7 @@
         }
 
         .bot-message.typing {
-            background-color: #3b3b3b; /* Indicador de escritura oscuro */
-            color: #d4d4d4;
+            background-color: #4a4a4a; /* Gris más claro para el "escribiendo" */
             opacity: 1;
         }
 
@@ -113,7 +114,7 @@
             display: inline-block;
             width: 8px;
             height: 8px;
-            background-color: #888;
+            background-color: #999;
             border-radius: 50%;
             margin-right: 5px;
             animation: typing-dots 1.4s infinite ease-in-out;
@@ -137,7 +138,7 @@
         }
 
         .error-message {
-            color: #f44336; /* Rojo más oscuro */
+            color: #e57373; /* Rojo más oscuro */
             font-style: italic;
             text-align: center;
             margin-top: 10px;
@@ -148,13 +149,13 @@
             border-top: 1px solid #4d4d4d; /* Borde oscuro */
             display: flex;
             align-items: center;
-            background-color: #252526; /* Fondo oscuro para el input area */
+            background-color: #252526; /* Fondo oscuro para el input */
         }
 
         #user-input {
             flex-grow: 1;
             padding: 10px;
-            border: 1px solid #5e5e5e; /* Borde oscuro para el input */
+            border: 1px solid #5e5e5e; /* Borde más oscuro */
             border-radius: 5px;
             margin-right: 10px;
             font-size: 1em;
@@ -167,7 +168,7 @@
         }
 
         button {
-            background-color: #5e5e5e; /* Botón oscuro */
+            background-color: #5086ad; /* Azul oscuro para el botón */
             color: #f0f0f0;
             border: none;
             border-radius: 5px;
@@ -178,32 +179,32 @@
         }
 
         button:hover {
-            background-color: #777; /* Botón más claro al pasar el ratón */
+            background-color: #3d6485; /* Azul más oscuro al pasar el ratón */
             transform: scale(1.05);
         }
 
         #typing-indicator {
             align-self: flex-start;
-            background-color: #3b3b3b; /* Indicador de escritura oscuro */
+            background-color: #383838; /* Gris oscuro para el "escribiendo" */
             color: #d4d4d4;
             padding: 12px;
             border-radius: 8px 8px 8px 0;
             margin-right: 30%;
             word-break: break-word;
             box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
-            opacity: 0;
+            opacity: 0; /* Inicialmente oculto */
             transition: opacity 0.3s ease-in-out;
         }
 
         #typing-indicator.active {
-            opacity: 1;
+            opacity: 1; /* Se muestra cuando está activo */
         }
 
         #typing-indicator.active span {
             display: inline-block;
             width: 8px;
             height: 8px;
-            background-color: #888;
+            background-color: #999;
             border-radius: 50%;
             margin-right: 5px;
             animation: typing-dots 1.4s infinite ease-in-out;
