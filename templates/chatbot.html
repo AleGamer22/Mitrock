@@ -221,15 +221,6 @@
             animation-delay: 0.4s;
         }
 
-        @keyframes typing-dots {
-            0%, 80%, 100% {
-                transform: scale(0);
-            }
-            40% {
-                transform: scale(1);
-            }
-        }
-
         #chat-buttons {
             padding: 10px;
             text-align: center;
@@ -241,6 +232,21 @@
         }
 
         #chat-buttons button {
+            /* Hereda estilos generales del botón */
+        }
+
+        /* Estilos para la marca de agua */
+        #watermark {
+            position: absolute;
+            bottom: 10px;
+            right: 10px;
+            opacity: 0.7; /* Ajusta la transparencia */
+            z-index: 10; /* Asegura que esté por encima del contenido del chat */
+        }
+
+        #watermark img {
+            max-width: 100px; /* Ajusta el tamaño del logo */
+            height: auto;
         }
     </style>
 </head>
@@ -267,14 +273,18 @@
             <button onclick="resetChat()">Reiniciar IA</button>
             <button onclick="regenerateResponse()">Regenerar Respuesta</button>
         </div>
+
+        <div id="watermark">
+            <a href="https://www.youtube.com/@AleNationVibes" target="_blank">
+                <img src="https://yt3.googleusercontent.com/6dHA4A14WdEOq_yGMebxHmgUtin9WVNNOEqYPU_QqZh_1hGatrZVeia24m6qpoyMz7aNwsSRhA=s160-c-k-c0x00ffffff-no-rj" alt="Logo Mitrock IA">
+            </a>
+        </div>
     </div>
 
     <script>
         const userInput = document.getElementById("user-input");
         const chatLog = document.getElementById("chat-log");
         const typingIndicator = document.getElementById("typing-indicator");
-
-        let conversationHistory = [];
 
         function appendMessage(sender, text) {
             const messageContainer = document.createElement("div");
@@ -285,7 +295,6 @@
             messageContainer.appendChild(messageDiv);
             chatLog.appendChild(messageContainer);
             chatLog.scrollTop = chatLog.scrollHeight;
-            conversationHistory.push({ role: sender, content: text });
         }
 
         async function sendMessage() {
@@ -293,6 +302,7 @@
             if (message) {
                 appendMessage("user", message);
                 userInput.value = "";
+
                 typingIndicator.classList.add("active");
 
                 try {
@@ -338,7 +348,6 @@
             if (response.ok) {
                 chatLog.innerHTML = '<div class="message-container"><div class="bot-message">Chat reiniciado. Envia un mensaje para empezar!</div></div><div id="typing-indicator" class="bot-message typing"><span></span><span></span><span></span></div>';
                 typingIndicator = document.getElementById("typing-indicator");
-                conversationHistory = [];
             } else {
                 const errorData = await response.json();
                 appendMessage("error", `Error al reiniciar el chat: ${errorData.error || 'Error desconocido'}`);
@@ -346,6 +355,7 @@
         }
 
         async function regenerateResponse() {
+            const conversationHistory = JSON.parse(sessionStorage.getItem('conversation_history') || '[]');
             if (conversationHistory.length > 1 && conversationHistory[conversationHistory.length - 1].role === 'bot') {
                 const lastUserMessage = conversationHistory[conversationHistory.length - 2].content;
                 typingIndicator.classList.add("active");
@@ -361,8 +371,11 @@
                     if (response.ok) {
                         const data = await response.json();
                         if (data.response) {
-                            chatLog.removeChild(chatLog.lastElementChild);
+                            chatLog.removeChild(chatLog.lastElementChild.previousElementSibling);
                             appendMessage("bot", data.response);
+                            conversationHistory.pop();
+                            conversationHistory.push({ role: 'bot', content: data.response });
+                            sessionStorage.setItem('conversation_history', JSON.stringify(conversationHistory));
                         } else if (data.error) {
                             appendMessage("error", `Error al regenerar: ${data.error}`);
                         } else {
@@ -388,6 +401,8 @@
 
         window.onload = function() {
             userInput.focus();
+            const storedHistory = JSON.parse(sessionStorage.getItem('conversation_history') || '[]');
+            storedHistory.forEach(msg => appendMessage(msg.role, msg.content));
             if (!document.getElementById('typing-indicator')) {
                 const typingDiv = document.createElement('div');
                 typingDiv.id = 'typing-indicator';
