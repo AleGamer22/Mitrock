@@ -7,8 +7,8 @@
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #1e1e1e; /* Gris oscuro casi negro */
-            color: #d4d4d4; /* Gris claro para el texto general */
+            background-color: #1e1e1e;
+            color: #d4d4d4;
             margin: 0;
             display: flex;
             justify-content: center;
@@ -18,32 +18,31 @@
 
         #chat-container {
             width: 90%;
-            /* max-width: 500px; */ /* Comentamos el ancho anterior */
-            max-width: 600px; /* Nuevo ancho máximo */
-            background-color: #252526; /* Gris oscuro */
+            max-width: 600px;
+            background-color: #252526;
             border-radius: 8px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5); /* Sombra más pronunciada */
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
             overflow: hidden;
             display: flex;
             flex-direction: column;
-            max-height: 80vh; /* Nueva altura máxima para el contenedor */
+            max-height: 80vh;
         }
 
         #chat-header {
-            background-color: #3f3f46; /* Gris más claro para el header */
+            background-color: #3f3f46;
             color: #d4d4d4;
             padding: 20px;
             text-align: center;
             font-size: 1.7em;
-            border-bottom: 1px solid #4d4d4d; /* Borde más oscuro */
+            border-bottom: 1px solid #4d4d4d;
         }
 
         #chat-log {
             flex-grow: 1;
             padding: 20px;
-            overflow-y: auto; /* Habilitar el scroll vertical cuando el contenido excede la altura */
+            overflow-y: auto;
             scrollbar-width: thin;
-            scrollbar-color: #555 #252526; /* Scrollbar oscuro */
+            scrollbar-color: #555 #252526;
             display: flex;
             flex-direction: column;
         }
@@ -85,7 +84,7 @@
 
         .user-message {
             align-self: flex-end;
-            background-color: #5086ad; /* Azul oscuro para el usuario */
+            background-color: #5086ad;
             color: #f0f0f0;
             padding: 12px;
             border-radius: 8px 8px 0 8px;
@@ -96,7 +95,7 @@
 
         .bot-message {
             align-self: flex-start;
-            background-color: #383838; /* Gris oscuro para el bot */
+            background-color: #383838;
             color: #d4d4d4;
             padding: 12px;
             border-radius: 8px 8px 8px 0;
@@ -106,7 +105,7 @@
         }
 
         .bot-message.typing {
-            background-color: #4a4a4a; /* Gris más claro para el "escribiendo" */
+            background-color: #4a4a4a;
             opacity: 1;
         }
 
@@ -138,7 +137,7 @@
         }
 
         .error-message {
-            color: #e57373; /* Rojo más oscuro */
+            color: #e57373;
             font-style: italic;
             text-align: center;
             margin-top: 10px;
@@ -146,29 +145,29 @@
 
         #input-area {
             padding: 15px;
-            border-top: 1px solid #4d4d4d; /* Borde oscuro */
+            border-top: 1px solid #4d4d4d;
             display: flex;
             align-items: center;
-            background-color: #252526; /* Fondo oscuro para el input */
+            background-color: #252526;
         }
 
         #user-input {
             flex-grow: 1;
             padding: 10px;
-            border: 1px solid #5e5e5e; /* Borde más oscuro */
+            border: 1px solid #5e5e5e;
             border-radius: 5px;
             margin-right: 10px;
             font-size: 1em;
-            background-color: #3b3b3b; /* Fondo oscuro para el input */
+            background-color: #3b3b3b;
             color: #d4d4d4;
         }
 
         #user-input::placeholder {
-            color: #8a8a8a; /* Placeholder más claro */
+            color: #8a8a8a;
         }
 
         button {
-            background-color: #5086ad; /* Azul oscuro para el botón */
+            background-color: #5086ad;
             color: #f0f0f0;
             border: none;
             border-radius: 5px;
@@ -179,25 +178,25 @@
         }
 
         button:hover {
-            background-color: #3d6485; /* Azul más oscuro al pasar el ratón */
+            background-color: #3d6485;
             transform: scale(1.05);
         }
 
         #typing-indicator {
             align-self: flex-start;
-            background-color: #383838; /* Gris oscuro para el "escribiendo" */
+            background-color: #383838;
             color: #d4d4d4;
             padding: 12px;
             border-radius: 8px 8px 8px 0;
             margin-right: 30%;
             word-break: break-word;
             box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
-            opacity: 0; /* Inicialmente oculto */
+            opacity: 0;
             transition: opacity 0.3s ease-in-out;
         }
 
         #typing-indicator.active {
-            opacity: 1; /* Se muestra cuando está activo */
+            opacity: 1;
         }
 
         #typing-indicator.active span {
@@ -238,6 +237,9 @@
             <input type="text" id="user-input" placeholder="Escribe tu mensaje y presiona Enter...">
             <button onclick="sendMessage()">Enviar</button>
         </div>
+        <div style="padding: 10px; text-align: center; border-top: 1px solid #4d4d4d; background-color: #252526;">
+            <button onclick="resetChat()">Reiniciar IA</button>
+        </div>
     </div>
 
     <script>
@@ -262,7 +264,7 @@
                 appendMessage("user", message);
                 userInput.value = "";
 
-                typingIndicator.classList.add("active"); // Mostrar la animación
+                typingIndicator.classList.add("active");
 
                 try {
                     const response = await fetch("/api/chat", {
@@ -273,7 +275,7 @@
                         body: JSON.stringify({ message: message })
                     });
 
-                    typingIndicator.classList.remove("active"); // Ocultar la animación
+                    typingIndicator.classList.remove("active");
 
                     if (!response.ok) {
                         appendMessage("error", `Error del servidor: ${response.statusText}`);
@@ -290,9 +292,26 @@
                     }
 
                 } catch (error) {
-                    typingIndicator.classList.remove("active"); // Ocultar en caso de error
+                    typingIndicator.classList.remove("active");
                     appendMessage("error", `Error de conexión: ${error.message}`);
                 }
+            }
+        }
+
+        async function resetChat() {
+            const response = await fetch("/api/reset_chat", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                }
+            });
+
+            if (response.ok) {
+                chatLog.innerHTML = '<div class="message-container"><div class="bot-message">Chat reiniciado. Envia un mensaje para empezar!</div></div><div id="typing-indicator" class="bot-message typing"><span></span><span></span><span></span></div>';
+                typingIndicator = document.getElementById("typing-indicator");
+            } else {
+                const errorData = await response.json();
+                appendMessage("error", `Error al reiniciar el chat: ${errorData.error || 'Error desconocido'}`);
             }
         }
 
