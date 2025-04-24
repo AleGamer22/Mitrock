@@ -37,7 +37,6 @@ def chat():
 
     conversation_history = session["conversation_history"]
 
-    # Limitar el historial para evitar prompts demasiado largos
     max_history_length = 5
     if len(conversation_history) > max_history_length:
         conversation_history = conversation_history[-max_history_length:]
@@ -70,10 +69,9 @@ def chat():
             bot_response_text = response_json["candidates"][0]["content"]["parts"][0]["text"]
             formatted_response = re.sub(r"\*\*(.+?)\*\*", r"<strong>\1</strong>", bot_response_text)
 
-            # Guardar la interacción en la sesión
             session["conversation_history"].append({"role": "usuario", "content": user_message})
             session["conversation_history"].append({"role": "bot", "content": formatted_response})
-            session.modified = True  # ¡Importante para guardar los cambios en la sesión!
+            session.modified = True
 
             return jsonify({"response": formatted_response})
         else:
@@ -83,6 +81,12 @@ def chat():
         return jsonify({"error": f"Error al comunicarse con la API de Gemini: {e}"}), 500
     except Exception as e:
         return jsonify({"error": f"Error inesperado en el servidor: {e}"}), 500
+
+
+@app.route("/api/reset_chat", methods=["POST"])
+def reset_chat():
+    session.pop("conversation_history", None)
+    return jsonify({"message": "Chat history cleared"})
 
 
 if __name__ == "__main__":
