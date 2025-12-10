@@ -284,17 +284,54 @@
         const chatLog = document.getElementById("chat-log");
         let typingIndicator = document.getElementById("typing-indicator");
 
-        // Helper: sanitize minimal HTML -> keep as plain text for storage
+        // Helper: sanitize minimal HTML -> keep selected formatting tags, remove scripts/attrs
         function stripTags(html){
             const div = document.createElement('div');
             div.innerHTML = html;
             return div.textContent || div.innerText || '';
         }
 
-        function saveToHistory(role, content){
-            const history = JSON.parse(sessionStorage.getItem('conversation_history') || '[]');
-            history.push({ role, content });
-            sessionStorage.setItem('conversation_history', JSON.stringify(history));
+        function sanitizeHTML(html){
+            const template = document.createElement('template');
+            template.innerHTML = html;
+
+            const allowedTags = new Set(['strong','b','em','i','u','code','pre','a','br','p','ul','ol','li','span']);
+            const allowedAttrs = { a: ['href', 'target', 'rel'] };
+            const isSafeUrl = (url) => /^(https?:|mailto:|\/)/i.test(url);
+
+            function clean(node){
+                if (node.nodeType === Node.TEXT_NODE) return;
+                if (node.nodeType !== Node.ELEMENT_NODE) { node.remove(); return; }
+
+                const tag = node.tagName.toLowerCase();
+                if (!allowedTags.has(tag)){
+                    // unwrap node but keep children
+                    const parent = node.parentNode;
+                    while (node.firstChild) parent.insertBefore(node.firstChild, node);
+                    parent.removeChild(node);
+                    return;
+                }
+
+                // remove disallowed attributes
+                for (let i = node.attributes.length - 1; i >= 0; i--){
+                    const attr = node.attributes[i];
+                    const name = attr.name.toLowerCase();
+                    if (!((allowedAttrs[tag] || []).includes(name))){
+                        node.removeAttribute(attr.name);
+                    } else {
+                        // check safe hrefs
+                        if (tag === 'a' && name === 'href' && !isSafeUrl(attr.value)){
+                            node.removeAttribute('href');
+                        }
+                    }
+                }
+
+                // recurse children
+                Array.from(node.childNodes).forEach(child => clean(child));
+            }
+
+            Array.from(template.content.childNodes).forEach(child => clean(child));
+            return template.innerHTML;
         }
 
         function appendMessage(sender, text) {
@@ -308,8 +345,10 @@
                 saveToHistory('user', text);
             } else if (sender === 'bot') {
                 messageDiv.classList.add('bot-message');
-                messageDiv.textContent = text;
-                saveToHistory('bot', text);
+                // render allowed HTML tags (sanitized) so <strong> se vea como negrita
+                const safeHtml = sanitizeHTML(text);
+                messageDiv.innerHTML = safeHtml;
+                saveToHistory('bot', safeHtml);
             } else { // error or other
                 messageDiv.classList.add('error-message');
                 messageDiv.textContent = text;
