@@ -5,282 +5,275 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mitrock IA</title>
     <style>
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #1e1e1e;
-            color: #d4d4d4;
-            margin: 0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
+        :root{
+            --bg-1: #0f1720;
+            --bg-2: #0b1220;
+            --panel: rgba(255,255,255,0.03);
+            --accent: #4fb0ff;
+            --accent-2: #7b61ff;
+            --muted: #9aa4b2;
+            --muted-strong: #e6eef9;
+            --glass-blur: 10px;
+            --radius: 12px;
         }
 
-        #chat-container {
-            width: 90%;
-            max-width: 600px;
-            background-color: #252526;
-            border-radius: 8px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
-            max-height: 80vh;
+        /* Reset + full viewport */
+        html,body{
+            height:100%;
+            margin:0;
+            font-family: "Segoe UI", Roboto, Inter, system-ui, -apple-system, "Helvetica Neue", Arial;
+            -webkit-font-smoothing:antialiased;
+            -moz-osx-font-smoothing:grayscale;
+            background:
+                radial-gradient(1200px 600px at 10% 20%, rgba(123,97,255,0.06), transparent 8%),
+                radial-gradient(900px 500px at 90% 80%, rgba(79,176,255,0.04), transparent 10%),
+                linear-gradient(180deg,var(--bg-1), var(--bg-2));
+            color:var(--muted);
+            box-sizing:border-box;
+            -webkit-tap-highlight-color: transparent;
         }
 
-        #chat-header {
-            background-color: #3f3f46;
-            color: #d4d4d4;
-            padding: 20px;
-            text-align: center;
-            font-size: 1.7em;
-            border-bottom: 1px solid #4d4d4d;
+        /* App shell stretches full screen */
+        #chat-container{
+            position:fixed;
+            inset:0;
+            display:grid;
+            grid-template-rows: 72px 1fr auto;
+            gap:0;
+            max-width:1400px;
+            margin:0 auto;
+            width:100%;
+            height:100vh;
+            background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+            border-radius: 0;
+            border-left: 1px solid rgba(255,255,255,0.02);
+            border-right: 1px solid rgba(255,255,255,0.02);
+            box-shadow: 0 30px 80px rgba(2,6,23,0.6);
+            overflow:hidden;
+            backdrop-filter: blur(var(--glass-blur));
         }
 
-        #chat-log {
-            flex-grow: 1;
-            padding: 20px;
-            overflow-y: auto;
-            scrollbar-width: thin;
-            scrollbar-color: #555 #252526;
-            display: flex;
-            flex-direction: column;
-            padding-bottom: 60px;
-            position: relative;
+        /* Header (ChatGPT-like) */
+        #chat-header{
+            display:flex;
+            align-items:center;
+            gap:16px;
+            padding:14px 20px;
+            border-bottom: 1px solid rgba(255,255,255,0.03);
+            background: linear-gradient(90deg, rgba(255,255,255,0.01), rgba(255,255,255,0.00));
+        }
+        #brand {
+            display:flex;
+            gap:12px;
+            align-items:center;
+        }
+        #brand .logo {
+            width:40px; height:40px; border-radius:8px;
+            background: linear-gradient(135deg,var(--accent),var(--accent-2));
+            display:inline-flex;
+            align-items:center;
+            justify-content:center;
+            color:#031022;
+            font-weight:700;
+            box-shadow: 0 8px 24px rgba(123,97,255,0.12);
+        }
+        #chat-header h1{ margin:0; font-size:1.05rem; color:var(--muted-strong); letter-spacing:0.2px; }
+        #chat-header .subtitle { color:var(--muted); font-size:0.85rem; margin-left:auto; }
+
+        /* Chat log */
+        #chat-log{
+            padding:28px;
+            overflow:auto;
+            display:flex;
+            flex-direction:column;
+            gap:18px;
+            align-items:stretch;
+            scrollbar-width:thin;
+            scrollbar-color: rgba(255,255,255,0.08) transparent;
+            -webkit-overflow-scrolling: touch;
+            background:
+                linear-gradient(180deg, rgba(255,255,255,0.0005), rgba(255,255,255,0.0002));
+        }
+        #chat-log::-webkit-scrollbar{ width:10px; height:10px; }
+        #chat-log::-webkit-scrollbar-thumb{
+            background: linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02));
+            border-radius:20px;
+            border: 2px solid transparent;
+            background-clip: padding-box;
         }
 
-        #chat-log::-webkit-scrollbar {
-            width: 8px;
+        /* Message container and animation */
+        .message-container{
+            display:flex;
+            gap:12px;
+            max-width:78%;
+            align-items:flex-end;
+            animation: msg-entrance 320ms cubic-bezier(.2,.9,.3,1);
+            position:relative;
+            word-wrap:break-word;
+        }
+        @keyframes msg-entrance{
+            from { opacity:0; transform: translateY(8px) scale(.995); }
+            to   { opacity:1; transform: translateY(0) scale(1); }
         }
 
-        #chat-log::-webkit-scrollbar-track {
-            background: #252526;
-            border-radius: 4px;
+        /* Left = bot, Right = user */
+        .bot-message{
+            margin-right:auto;
+            background: linear-gradient(180deg, rgba(255,255,255,0.012), rgba(255,255,255,0.01));
+            color: var(--muted-strong);
+            padding:14px 16px;
+            border-radius:14px 14px 14px 6px;
+            box-shadow: 0 6px 18px rgba(12,18,30,0.35);
+            font-size:0.98rem;
+            line-height:1.5;
+            position:relative;
+        }
+        .user-message{
+            margin-left:auto;
+            background: linear-gradient(180deg, rgba(79,176,255,0.16), rgba(123,97,255,0.12));
+            color: #041224;
+            padding:14px 16px;
+            border-radius:14px 14px 6px 14px;
+            box-shadow: 0 6px 18px rgba(11,20,30,0.45);
+            font-size:0.98rem;
+            line-height:1.5;
+        }
+        .error-message{
+            margin-left:auto;
+            margin-right:auto;
+            background: rgba(255,107,107,0.08);
+            color: #ff9a9a;
+            padding:10px 14px;
+            border-radius:10px;
+            font-size:0.92rem;
+            text-align:center;
         }
 
-        #chat-log::-webkit-scrollbar-thumb {
-            background-color: #555;
-            border-radius: 4px;
+        /* Typing indicator - hidden by default, shown when .active */
+        .bot-message.typing{ display:none; align-items:center; gap:8px; }
+        .bot-message.typing.active{ display:inline-flex; background:transparent; box-shadow:none; color:var(--muted); padding:8px 12px; }
+        .bot-message.typing span{
+            display:inline-block;
+            width:9px; height:9px;
+            margin-right:6px;
+            background: linear-gradient(180deg, #d1d5db, #9aa4b2);
+            border-radius:50%;
+            transform:scale(.2);
+            animation: typing-bounce 1.2s infinite ease-in-out;
+        }
+        .bot-message.typing span:nth-child(2){ animation-delay:0.15s; }
+        .bot-message.typing span:nth-child(3){ animation-delay:0.30s; }
+        @keyframes typing-bounce{
+            0%{ transform:translateY(0) scale(.6); opacity:.35;}
+            50%{ transform:translateY(-6px) scale(1); opacity:1;}
+            100%{ transform:translateY(0) scale(.6); opacity:.35;}
         }
 
-        #chat-log::-webkit-scrollbar-thumb:hover {
-            background-color: #777;
+        /* Input area fixed look (grid bottom row) */
+        #input-area{
+            padding:14px;
+            display:flex;
+            gap:12px;
+            align-items:center;
+            border-top: 1px solid rgba(255,255,255,0.02);
+            background: linear-gradient(0deg, rgba(255,255,255,0.01), rgba(255,255,255,0.00));
+        }
+        #user-input{
+            flex:1;
+            padding:14px 16px;
+            background: rgba(255,255,255,0.02);
+            border: 1px solid rgba(255,255,255,0.03);
+            border-radius: 12px;
+            color: var(--muted-strong);
+            outline:none;
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.01);
+            transition: box-shadow .18s ease, transform .08s ease;
+            font-size:1rem;
+        }
+        #user-input:focus{
+            box-shadow: 0 8px 30px rgba(79,176,255,0.08), inset 0 1px 0 rgba(255,255,255,0.02);
+            transform: translateY(-1px);
+        }
+        #user-input::placeholder{ color: rgba(230,238,249,0.35); }
+
+        /* Buttons */
+        .btn-send{
+            background: linear-gradient(180deg,var(--accent), var(--accent-2));
+            color:#041224;
+            border:none;
+            padding:10px 14px;
+            border-radius:10px;
+            cursor:pointer;
+            font-weight:600;
+            letter-spacing:0.2px;
+            transition: transform .12s ease, box-shadow .12s ease, opacity .12s ease;
+            box-shadow: 0 8px 24px rgba(123,97,255,0.12);
+        }
+        .btn-send:hover{ transform: translateY(-3px); opacity:0.98; box-shadow: 0 18px 42px rgba(123,97,255,0.16); }
+        .btn-send:active{ transform: translateY(-1px); }
+
+        #chat-buttons{ display:flex; gap:12px; padding:12px 20px; justify-content:flex-end; border-top: 1px solid rgba(255,255,255,0.02); background:transparent; }
+        #chat-buttons .btn-secondary{ background: rgba(255,255,255,0.02); color:var(--muted); padding:8px 12px; border-radius:10px; box-shadow:none; cursor:pointer; }
+        #chat-buttons .btn-secondary:hover{ background: rgba(255,255,255,0.03); color: var(--muted-strong); }
+
+        /* Watermark */
+        #watermark{ position:absolute; bottom:18px; right:18px; opacity:0.9; filter: drop-shadow(0 8px 20px rgba(0,0,0,0.6)); }
+        #watermark img{ width:64px; height:64px; border-radius:50%; object-fit:cover; border:3px solid rgba(255,255,255,0.03); }
+
+        /* Responsive adjustments - prefer desktop but adapt to mobile */
+        @media (max-width:900px){
+            #chat-container{ grid-template-rows: 64px 1fr auto; }
+            #chat-log{ padding:18px; gap:14px; }
+            .message-container{ max-width:86%; }
+            #chat-header h1{ font-size:1rem; }
+        }
+        @media (max-width:520px){
+            #chat-container{ padding-bottom:0; }
+            #chat-header{ padding:12px 14px; }
+            #brand .logo{ width:36px; height:36px; }
+            #user-input{ padding:12px; font-size:0.96rem; }
+            .message-container{ max-width:92%; }
+            #chat-buttons{ padding:8px 12px; justify-content:space-between; }
+            #watermark{ display:none; }
         }
 
-        .message-container {
-            margin-bottom: 12px;
-            display: flex;
-            flex-direction: column;
-            width: 100%;
-            opacity: 0;
-            transform: translateY(10px);
-            animation: fade-in 0.3s ease-out forwards;
-        }
-
-        @keyframes fade-in {
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .user-message {
-            align-self: flex-end;
-            background-color: #5086ad;
-            color: #f0f0f0;
-            padding: 12px;
-            border-radius: 8px 8px 0 8px;
-            margin-left: 30%;
-            word-break: break-word;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
-        }
-
-        .bot-message {
-            align-self: flex-start;
-            background-color: #383838;
-            color: #d4d4d4;
-            padding: 12px;
-            border-radius: 8px 8px 8px 0;
-            margin-right: 30%;
-            word-break: break-word;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
-        }
-
-        .bot-message.typing {
-            background-color: #4a4a4a;
-            opacity: 1;
-        }
-
-        .bot-message.typing span {
-            display: inline-block;
-            width: 8px;
-            height: 8px;
-            background-color: #999;
-            border-radius: 50%;
-            margin-right: 5px;
-            animation: typing-dots 1.4s infinite ease-in-out;
-        }
-
-        .bot-message.typing span:nth-child(2) {
-            animation-delay: 0.2s;
-        }
-
-        .bot-message.typing span:nth-child(3) {
-            animation-delay: 0.4s;
-        }
-
-        @keyframes typing-dots {
-            0%, 80%, 100% {
-                transform: scale(0);
-            }
-            40% {
-                transform: scale(1);
-            }
-        }
-
-        .error-message {
-            color: #e57373;
-            font-style: italic;
-            text-align: center;
-            margin-top: 10px;
-        }
-
-        #input-area {
-            padding: 15px;
-            border-top: 1px solid #4d4d4d;
-            display: flex;
-            align-items: center;
-            background-color: #252526;
-        }
-
-        #user-input {
-            flex-grow: 1;
-            padding: 10px;
-            border: 1px solid #5e5e5e;
-            border-radius: 5px;
-            margin-right: 10px;
-            font-size: 1em;
-            background-color: #3b3b3b;
-            color: #d4d4d4;
-        }
-
-        #user-input::placeholder {
-            color: #8a8a8a;
-        }
-
-        button {
-            background-color: #5086ad;
-            color: #f0f0f0;
-            border: none;
-            border-radius: 5px;
-            padding: 10px 15px;
-            cursor: pointer;
-            font-size: 1em;
-            transition: background-color 0.3s ease, transform 0.2s ease-in-out;
-        }
-
-        button:hover {
-            background-color: #3d6485;
-            transform: scale(1.05);
-        }
-
-        #typing-indicator {
-            position: absolute;
-            bottom: 10px;
-            left: 20px;
-            background-color: #383838;
-            color: #d4d4d4;
-            padding: 12px;
-            border-radius: 8px 8px 8px 0;
-            margin-right: 30%;
-            word-break: break-word;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
-            opacity: 0;
-            transition: opacity 0.3s ease-in-out;
-        }
-
-        #typing-indicator.active {
-            opacity: 1;
-        }
-
-        #typing-indicator.active span {
-            display: inline-block;
-            width: 8px;
-            height: 8px;
-            background-color: #999;
-            border-radius: 50%;
-            margin-right: 5px;
-            animation: typing-dots 1.4s infinite ease-in-out;
-        }
-
-        #typing-indicator.active span:nth-child(2) {
-            animation-delay: 0.2s;
-        }
-
-        #typing-indicator.active span:nth-child(3) {
-            animation-delay: 0.4s;
-        }
-
-        #chat-buttons {
-            padding: 10px;
-            text-align: center;
-            border-top: 1px solid #4d4d4d;
-            background-color: #252526;
-            display: flex;
-            gap: 10px;
-            justify-content: center;
-        }
-
-        #chat-buttons button {
-            /* Hereda estilos generales del botón */
-        }
-
-         /* Estilos para la marca de agua */
-        #watermark {
-            position: absolute;
-            bottom: 10px;
-            right: 10px;
-            opacity: 0.7; /* Ajusta la transparencia */
-            z-index: 10; /* Asegura que esté por encima del contenido del chat */
-        }
-
-        #watermark img {
-            max-width: 100px; /* Ajusta el tamaño del logo */
-            height: auto;
-            /* AÑADE ESTAS LÍNEAS PARA HACER EL LOGO CIRCULAR */
-            border-radius: 50%;
-            object-fit: cover; /* Recorta la imagen para que se ajuste al círculo sin deformarse */
-            width: 100px;    /* Asegura que el ancho y la altura sean iguales */
-            height: 100px;   /* para formar un círculo perfecto */
-        }
     </style>
 </head>
 <body>
     <div id="chat-container">
         <div id="chat-header">
-            Mitrock IA
+            <div id="brand">
+                <div class="logo">M</div>
+                <div>
+                    <h1>Mitrock IA</h1>
+                    <div class="subtitle">Asistente inteligente</div>
+                </div>
+            </div>
+            <div class="subtitle">Preferencia PC · Responsive</div>
         </div>
-        <div id="chat-log">
+
+        <div id="chat-log" role="log" aria-live="polite">
             <div class="message-container">
                 <div class="bot-message">Envia un mensaje para empezar!</div>
             </div>
-            <div id="typing-indicator" class="bot-message typing">
-                <span></span>
-                <span></span>
-                <span></span>
+            <div id="typing-indicator" class="bot-message typing" aria-hidden="true">
+                <span></span><span></span><span></span>
             </div>
         </div>
-        <div id="input-area">
-            <input type="text" id="user-input" placeholder="Escribe tu mensaje y presiona Enter...">
-            <button onclick="sendMessage()">Enviar</button>
+
+        <div id="input-area" role="region" aria-label="Entrada de mensaje">
+            <input type="text" id="user-input" placeholder="Escribe tu mensaje y presiona Enter..." autocomplete="off" />
+            <button class="btn-send" onclick="sendMessage()">Enviar</button>
         </div>
+
         <div id="chat-buttons">
-            <button onclick="resetChat()">Reiniciar IA</button>
-            <button onclick="regenerateResponse()">Regenerar Respuesta</button>
+            <button class="btn-secondary" onclick="resetChat()">Reiniciar IA</button>
+            <button class="btn-secondary" onclick="regenerateResponse()">Regenerar Respuesta</button>
         </div>
 
         <div id="watermark">
-            <a href="https://www.youtube.com/@AleNationVibes" target="_blank">
+            <a href="https://www.youtube.com/@AleNationVibes" target="_blank" rel="noopener noreferrer">
                 <img src="https://yt3.googleusercontent.com/6dHA4A14WdEOq_yGMebxHmgUtin9WVNNOEqYPU_QqZh_1hGatrZVeia24m6qpoyMz7aNwsSRhA=s160-c-k-c0x00ffffff-no-rj" alt="Logo Mitrock IA">
             </a>
         </div>
@@ -289,98 +282,163 @@
     <script>
         const userInput = document.getElementById("user-input");
         const chatLog = document.getElementById("chat-log");
-        const typingIndicator = document.getElementById("typing-indicator");
+        let typingIndicator = document.getElementById("typing-indicator");
+
+        // Helper: sanitize minimal HTML -> keep as plain text for storage
+        function stripTags(html){
+            const div = document.createElement('div');
+            div.innerHTML = html;
+            return div.textContent || div.innerText || '';
+        }
+
+        function saveToHistory(role, content){
+            const history = JSON.parse(sessionStorage.getItem('conversation_history') || '[]');
+            history.push({ role, content });
+            sessionStorage.setItem('conversation_history', JSON.stringify(history));
+        }
 
         function appendMessage(sender, text) {
             const messageContainer = document.createElement("div");
             messageContainer.classList.add("message-container");
             const messageDiv = document.createElement("div");
-            messageDiv.classList.add(`${sender}-message`);
-            messageDiv.innerHTML = text;
+
+            if (sender === 'user') {
+                messageDiv.classList.add('user-message');
+                messageDiv.textContent = text;
+                saveToHistory('user', text);
+            } else if (sender === 'bot') {
+                messageDiv.classList.add('bot-message');
+                messageDiv.textContent = text;
+                saveToHistory('bot', text);
+            } else { // error or other
+                messageDiv.classList.add('error-message');
+                messageDiv.textContent = text;
+            }
+
             messageContainer.appendChild(messageDiv);
-            chatLog.appendChild(messageContainer);
+            // Insert before typing indicator if present
+            if (typingIndicator && typingIndicator.parentElement === chatLog) {
+                chatLog.insertBefore(messageContainer, typingIndicator);
+            } else {
+                chatLog.appendChild(messageContainer);
+            }
             chatLog.scrollTop = chatLog.scrollHeight;
+        }
+
+        function showTyping(show = true){
+            if (!typingIndicator) return;
+            if (show){
+                typingIndicator.classList.add('active');
+                typingIndicator.setAttribute('aria-hidden','false');
+                chatLog.scrollTop = chatLog.scrollHeight;
+            } else {
+                typingIndicator.classList.remove('active');
+                typingIndicator.setAttribute('aria-hidden','true');
+            }
         }
 
         async function sendMessage() {
             const message = userInput.value.trim();
-            if (message) {
-                appendMessage("user", message);
-                userInput.value = "";
+            if (!message) return;
+            appendMessage("user", message);
+            userInput.value = "";
+            userInput.focus();
 
-                typingIndicator.classList.add("active");
+            showTyping(true);
 
-                try {
-                    const response = await fetch("/api/chat", {
-                        method: "POST",
-                        headers: {
-                            "Content-Type": "application/json"
-                        },
-                        body: JSON.stringify({ message: message })
-                    });
+            try {
+                const response = await fetch("/api/chat", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ message: message })
+                });
 
-                    typingIndicator.classList.remove("active");
+                showTyping(false);
 
-                    if (!response.ok) {
-                        appendMessage("error", `Error del servidor: ${response.statusText}`);
-                        return;
-                    }
-
-                    const data = await response.json();
-                    if (data.response) {
-                        appendMessage("bot", data.response);
-                    } else if (data.error) {
-                        appendMessage("error", `Error del bot: ${data.error}`);
-                    } else {
-                        appendMessage("error", "Respuesta inesperada del servidor.");
-                    }
-
-                } catch (error) {
-                    typingIndicator.classList.remove("active");
-                    appendMessage("error", `Error de conexión: ${error.message}`);
+                if (!response.ok) {
+                    appendMessage("error", `Error del servidor: ${response.statusText}`);
+                    return;
                 }
+
+                const data = await response.json();
+                if (data.response) {
+                    appendMessage("bot", data.response);
+                } else if (data.error) {
+                    appendMessage("error", `Error del bot: ${data.error}`);
+                } else {
+                    appendMessage("error", "Respuesta inesperada del servidor.");
+                }
+
+            } catch (error) {
+                showTyping(false);
+                appendMessage("error", `Error de conexión: ${error.message}`);
             }
         }
 
         async function resetChat() {
-            const response = await fetch("/api/reset_chat", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                }
-            });
+            try {
+                const response = await fetch("/api/reset_chat", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" }
+                });
 
-            if (response.ok) {
-                chatLog.innerHTML = '<div class="message-container"><div class="bot-message">Chat reiniciado. Envia un mensaje para empezar!</div></div><div id="typing-indicator" class="bot-message typing"><span></span><span></span><span></span></div>';
-                typingIndicator = document.getElementById("typing-indicator");
-            } else {
-                const errorData = await response.json();
-                appendMessage("error", `Error al reiniciar el chat: ${errorData.error || 'Error desconocido'}`);
+                if (response.ok) {
+                    sessionStorage.removeItem('conversation_history');
+                    chatLog.innerHTML = '<div class="message-container"><div class="bot-message">Chat reiniciado. Envia un mensaje para empezar!</div></div>';
+                    // recreate typing indicator
+                    const typingDiv = document.createElement('div');
+                    typingDiv.id = 'typing-indicator';
+                    typingDiv.className = 'bot-message typing';
+                    typingDiv.innerHTML = '<span></span><span></span><span></span>';
+                    chatLog.appendChild(typingDiv);
+                    typingIndicator = typingDiv;
+                } else {
+                    const errorData = await response.json();
+                    appendMessage("error", `Error al reiniciar el chat: ${errorData.error || 'Error desconocido'}`);
+                }
+            } catch (err){
+                appendMessage("error", `Error al reiniciar: ${err.message}`);
             }
         }
 
         async function regenerateResponse() {
             const conversationHistory = JSON.parse(sessionStorage.getItem('conversation_history') || '[]');
-            if (conversationHistory.length > 1 && conversationHistory[conversationHistory.length - 1].role === 'bot') {
-                const lastUserMessage = conversationHistory[conversationHistory.length - 2].content;
-                typingIndicator.classList.add("active");
+            // Find last bot entry and previous user
+            let lastBotIndex = -1;
+            for (let i = conversationHistory.length - 1; i >= 0; i--){
+                if (conversationHistory[i].role === 'bot'){ lastBotIndex = i; break; }
+            }
+            if (lastBotIndex > 0){
+                const lastUser = conversationHistory[lastBotIndex - 1];
+                if (!lastUser || lastUser.role !== 'user'){
+                    appendMessage("error", "No se encontró un mensaje de usuario previo para regenerar.");
+                    return;
+                }
+                const lastUserMessage = lastUser.content;
+                showTyping(true);
                 try {
                     const response = await fetch("/api/regenerate", {
                         method: "POST",
-                        headers: {
-                            "Content-Type": "application/json"
-                        },
+                        headers: { "Content-Type": "application/json" },
                         body: JSON.stringify({ message: lastUserMessage })
                     });
-                    typingIndicator.classList.remove("active");
+                    showTyping(false);
                     if (response.ok) {
                         const data = await response.json();
                         if (data.response) {
-                            chatLog.removeChild(chatLog.lastElementChild.previousElementSibling);
-                            appendMessage("bot", data.response);
-                            conversationHistory.pop();
+                            // remove last bot message from history and DOM
+                            // remove last bot message element in DOM
+                            const botEls = Array.from(chatLog.querySelectorAll('.bot-message')).filter(el => !el.classList.contains('typing'));
+                            if (botEls.length) {
+                                const lastBotEl = botEls[botEls.length -1];
+                                const parent = lastBotEl.parentElement;
+                                if (parent) parent.remove();
+                            }
+                            // update history
+                            conversationHistory.splice(lastBotIndex, 1);
                             conversationHistory.push({ role: 'bot', content: data.response });
                             sessionStorage.setItem('conversation_history', JSON.stringify(conversationHistory));
+                            appendMessage("bot", data.response);
                         } else if (data.error) {
                             appendMessage("error", `Error al regenerar: ${data.error}`);
                         } else {
@@ -390,7 +448,7 @@
                         appendMessage("error", `Error del servidor al regenerar: ${response.statusText}`);
                     }
                 } catch (error) {
-                    typingIndicator.classList.remove("active");
+                    showTyping(false);
                     appendMessage("error", `Error de conexión al regenerar: ${error.message}`);
                 }
             } else {
@@ -398,16 +456,21 @@
             }
         }
 
-        userInput.addEventListener("keypress", function(event) {
-            if (event.key === "Enter") {
+        userInput.addEventListener("keydown", function(event) {
+            if (event.key === "Enter" && !event.shiftKey) {
+                event.preventDefault();
                 sendMessage();
             }
         });
 
-        window.onload = function() {
+        window.addEventListener('load', () => {
             userInput.focus();
             const storedHistory = JSON.parse(sessionStorage.getItem('conversation_history') || '[]');
-            storedHistory.forEach(msg => appendMessage(msg.role, msg.content));
+            // Restore messages
+            storedHistory.forEach(msg => {
+                appendMessage(msg.role, msg.content);
+            });
+            // Ensure typing indicator exists and reference is up-to-date
             if (!document.getElementById('typing-indicator')) {
                 const typingDiv = document.createElement('div');
                 typingDiv.id = 'typing-indicator';
@@ -415,8 +478,10 @@
                 typingDiv.innerHTML = '<span></span><span></span><span></span>';
                 chatLog.appendChild(typingDiv);
                 typingIndicator = typingDiv;
+            } else {
+                typingIndicator = document.getElementById('typing-indicator');
             }
-        };
+        });
     </script>
 </body>
 </html>
