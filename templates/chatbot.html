@@ -264,7 +264,7 @@
 
         <div id="input-area" role="region" aria-label="Entrada de mensaje">
             <input type="text" id="user-input" placeholder="Escribe tu mensaje y presiona Enter..." autocomplete="off" />
-            <button class="btn-send" onclick="sendMessage()">Enviar</button>
+            <button type="button" class="btn-send" onclick="sendMessage()">Enviar</button>
         </div>
 
         <div id="chat-buttons">
@@ -334,6 +334,17 @@
             return template.innerHTML;
         }
 
+        // Añadido: guardar historial en sessionStorage (evita ReferenceError)
+        function saveToHistory(role, content){
+            try {
+                const history = JSON.parse(sessionStorage.getItem('conversation_history') || '[]');
+                history.push({ role, content });
+                sessionStorage.setItem('conversation_history', JSON.stringify(history));
+            } catch (e) {
+                console.warn('No se pudo guardar el historial en sessionStorage:', e);
+            }
+        }
+        
         function appendMessage(sender, text) {
             const messageContainer = document.createElement("div");
             messageContainer.classList.add("message-container");
