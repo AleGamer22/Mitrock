@@ -3,7 +3,7 @@ import requests
 import os
 from dotenv import load_dotenv
 import re
-# from pymongo import MongoClient
+from pymongo import MongoClient  # <-- descomentado/corregido
 
 # NUEVAS IMPORTS:
 import logging
@@ -12,15 +12,17 @@ from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from flask_cors import CORS
 from werkzeug.exceptions import RequestEntityTooLarge
+from werkzeug.middleware.proxy_fix import ProxyFix
 
 load_dotenv()
 
 app = Flask(__name__)
-app.secret_key = os.getenv("FLASK_SECRET_KEY", "your_secret_key")
+app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1)  # si se despliega detrás de proxy
+app.secret_key = os.getenv("FLASK_SECRET_KEY", os.urandom(32))
 
 # Seguridad / límites
 app.config.update({
-    "MAX_CONTENT_LENGTH": 16 * 1024,  # 16 KB máximo por petición (ajusta según necesidad)
+    "MAX_CONTENT_LENGTH": 64 * 1024,  # 64 KB máximo por petición (ajusta según necesidad)
     "SESSION_COOKIE_HTTPONLY": True,
     "SESSION_COOKIE_SAMESITE": "Lax",
     "SESSION_COOKIE_SECURE": os.getenv("SESSION_COOKIE_SECURE", "1") == "1"
@@ -30,15 +32,28 @@ app.config.update({
 CORS(app, resources={r"/api/*": {"origins": os.getenv("CORS_ORIGINS", "*")}})
 
 # Rate limiting
-limiter = Limiter(app, key_func=get_remote_address, default_limits=["30 per minute", "1000 per day"])
+limiter = Limiter(app, key_func=get_remote_address, default_limits=["60 per minute", "2000 per day"])
 
 # Logging básico
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 logger = logging.getLogger("mitrock")
 
-# Sanitizador: tags permitidos para respuestas HTML (si las devuelves con HTML)
-ALLOWED_TAGS = ["strong", "em", "code", "pre", "br", "p", "ul", "ol", "li", "a"]
-ALLOWED_ATTRS = {"a": ["href", "rel", "target"]}
+# Seguridad: cabeceras HTTP recomendadas
+@app.after_request
+def set_security_headers(response):
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["X-Frame-Options"] = "DENY"
+    response.headers["Referrer-Policy"] = "no-referrer-when-downgrade"
+    response.headers["Permissions-Policy"] = "geolocation=(), microphone=()"
+    # CSP mínimo — adapta según recursos que necesites cargar
+    response.headers["Content-Security-Policy"] = "default-src 'self'; img-src 'self' data: https:; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https:;"
+    # HSTS en producción
+    if os.getenv("FLASK_ENV") == "production":
+        response.headers["Strict-Transport-Security"] = "max-age=63072000; includeSubDomains; preload"
+    return response
+
+# Input limits
+MAX_INPUT_CHARS = int(os.getenv("MAX_INPUT_CHARS", "3000"))
 
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent"
@@ -47,20 +62,19 @@ MONGO_URI = os.getenv("MONGO_URI")
 DB_NAME = "chatbot_history"
 
 if not GEMINI_API_KEY:
-    print("Error: La variable de entorno GEMINI_API_KEY no está definida.")
+    logger.warning("La variable de entorno GEMINI_API_KEY no está definida.")
 
 if MONGO_URI:
     try:
-        client = MongoClient(MONGO_URI)
+        client = MongoClient(MONGO_URI, serverSelectionTimeoutMS=5000)
         db = client[DB_NAME]
         conversations = db.conversations
-        print("Conexión a MongoDB Atlas establecida.")
+        logger.info("Conexión a MongoDB Atlas establecida.")
     except Exception as e:
-        print(f"Error al conectar a MongoDB: {e}")
-        print("La funcionalidad de memoria persistente estará desactivada.")
+        logger.exception("Error al conectar a MongoDB. Desactivando persistencia.")
         MONGO_URI = None
 else:
-    print("Advertencia: La variable de entorno MONGO_URI no está definida. La memoria persistente estará desactivada.")
+    logger.info("MONGO_URI no definida; memoria persistente desactivada.")
 
 def get_conversation_history(user_id, use_persistence=True):
     if use_persistence and MONGO_URI:
@@ -107,6 +121,10 @@ def chat():
     user_message = request.json.get("message", "")
     if not isinstance(user_message, str) or not user_message.strip():
         return jsonify({"error": "Mensaje del usuario no proporcionado"}), 400
+
+    # Validación de longitud
+    if len(user_message) > MAX_INPUT_CHARS:
+        return jsonify({"error": f"Mensaje demasiado largo (máx {MAX_INPUT_CHARS} caracteres)."}), 413
 
     # Saneamiento básico de entrada
     user_message = bleach.clean(user_message, tags=[], attributes={}, strip=True).strip()
@@ -247,4 +265,8 @@ def regenerate():
         return jsonify({"error": f"Error inesperado en el servidor: {e}"}), 500
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    host = os.getenv("FLASK_HOST", "0.0.0.0")
+    port = int(os.getenv("FLASK_PORT", "5000"))
+    debug = os.getenv("FLASK_DEBUG", "0") == "1"
+    logger.info("Starting app on %s:%s debug=%s", host, port, debug)
+    app.run(host=host, port=port, debug=debug)
