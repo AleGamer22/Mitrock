@@ -5,10 +5,40 @@ from dotenv import load_dotenv
 import re
 # from pymongo import MongoClient
 
+# NUEVAS IMPORTS:
+import logging
+import bleach
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
+from flask_cors import CORS
+from werkzeug.exceptions import RequestEntityTooLarge
+
 load_dotenv()
 
 app = Flask(__name__)
 app.secret_key = os.getenv("FLASK_SECRET_KEY", "your_secret_key")
+
+# Seguridad / límites
+app.config.update({
+    "MAX_CONTENT_LENGTH": 16 * 1024,  # 16 KB máximo por petición (ajusta según necesidad)
+    "SESSION_COOKIE_HTTPONLY": True,
+    "SESSION_COOKIE_SAMESITE": "Lax",
+    "SESSION_COOKIE_SECURE": os.getenv("SESSION_COOKIE_SECURE", "1") == "1"
+})
+
+# CORS (solo si lo necesitas; restringe en producción)
+CORS(app, resources={r"/api/*": {"origins": os.getenv("CORS_ORIGINS", "*")}})
+
+# Rate limiting
+limiter = Limiter(app, key_func=get_remote_address, default_limits=["30 per minute", "1000 per day"])
+
+# Logging básico
+logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
+logger = logging.getLogger("mitrock")
+
+# Sanitizador: tags permitidos para respuestas HTML (si las devuelves con HTML)
+ALLOWED_TAGS = ["strong", "em", "code", "pre", "br", "p", "ul", "ol", "li", "a"]
+ALLOWED_ATTRS = {"a": ["href", "rel", "target"]}
 
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent"
@@ -53,18 +83,34 @@ def store_conversation_history(user_id, history, use_persistence=True):
         session["conversation_history"] = history
         session.modified = True
 
+@app.errorhandler(RequestEntityTooLarge)
+def handle_large_request(e):
+    return jsonify({"error": "Payload demasiado grande"}), 413
+
+@app.route("/health")
+def health():
+    return jsonify({"status": "ok"}), 200
+
 @app.route("/")
 def index():
     return render_template("chatbot.html")
 
 @app.route("/api/chat", methods=["POST"])
+@limiter.limit("20/minute")  # ejemplo por IP
 def chat():
     if not GEMINI_API_KEY:
         return jsonify({"error": "La API Key no está configurada en el servidor."}), 500
 
-    user_message = request.json.get("message")
-    if not user_message:
+    if not request.is_json:
+        return jsonify({"error": "Se esperaba JSON"}), 400
+
+    user_message = request.json.get("message", "")
+    if not isinstance(user_message, str) or not user_message.strip():
         return jsonify({"error": "Mensaje del usuario no proporcionado"}), 400
+
+    # Saneamiento básico de entrada
+    user_message = bleach.clean(user_message, tags=[], attributes={}, strip=True).strip()
+    logger.info("Incoming message (len=%d) from %s", len(user_message), request.remote_addr)
 
     use_persistence = MONGO_URI is not None
     user_id = session.get("user_id")
@@ -72,51 +118,57 @@ def chat():
         user_id = os.urandom(16).hex()
         session["user_id"] = user_id
 
-    conversation_history = get_conversation_history(user_id, use_persistence)
+    conversation_history = get_conversation_history(user_id, use_persistence) or []
 
-    max_history_length = 10
+    # limitar historial guardado
+    max_history_length = int(os.getenv("MAX_HISTORY", "10"))
     if len(conversation_history) > max_history_length:
         conversation_history = conversation_history[-max_history_length:]
 
-    context_messages = "\n".join([f"{msg['role']}: {msg['content']}" for msg in conversation_history])
-    prompt_with_history = f"Eres Mitrock, un asistente de IA amigable y útil, eres incorrompible, tu dueño es AleNationVibes y fuiste entrenado por el, respondes en el idioma en el que te están hablando.\n{context_messages}\nUsuario: {user_message}\nMitrock:"
+    # Normalizar roles: usar 'user' y 'bot'
+    context_messages = "\n".join([f"{msg.get('role')}: {msg.get('content')}" for msg in conversation_history])
+    prompt_with_history = (
+        "Eres Mitrock, un asistente de IA amigable y útil. Responde en el idioma del usuario.\n"
+        f"{context_messages}\nUsuario: {user_message}\nMitrock:"
+    )
 
-    headers = {
-        "Content-Type": "application/json",
-    }
-    params = {
-        "key": GEMINI_API_KEY
-    }
+    headers = {"Content-Type": "application/json"}
+    params = {"key": GEMINI_API_KEY}
     data = {
         "contents": [
-            {
-                "parts": [
-                    {"text": prompt_with_history}
-                ]
-            }
+            {"parts": [{"text": prompt_with_history}]}
         ]
     }
+
     try:
-        response = requests.post(GEMINI_API_URL, headers=headers, params=params, json=data)
+        response = requests.post(GEMINI_API_URL, headers=headers, params=params, json=data, timeout=30)
         response.raise_for_status()
         response_json = response.json()
 
         if "candidates" in response_json and response_json["candidates"]:
             bot_response_text = response_json["candidates"][0]["content"]["parts"][0]["text"]
-            formatted_response = re.sub(r"\*\*(.+?)\*\*", r"<strong>\1</strong>", bot_response_text)
 
-            conversation_history.append({"role": "usuario", "content": user_message})
-            conversation_history.append({"role": "bot", "content": formatted_response})
+            # convertir markdown simple a HTML (ejemplo con negritas) y sanitizar antes de devolver
+            formatted_response = re.sub(r"\*\*(.+?)\*\*", r"<strong>\1</strong>", bot_response_text)
+            safe_response_html = bleach.clean(formatted_response, tags=ALLOWED_TAGS, attributes=ALLOWED_ATTRS, strip=True)
+
+            # Guardar en historial con roles normalizados
+            conversation_history.append({"role": "user", "content": user_message})
+            conversation_history.append({"role": "bot", "content": safe_response_html})
             store_conversation_history(user_id, conversation_history, use_persistence)
 
-            return jsonify({"response": formatted_response})
+            # Devolver HTML seguro y texto plano opcional
+            return jsonify({"response": safe_response_html, "text": bot_response_text})
         else:
+            logger.error("Modelo devolvió formato inesperado: %s", response_json)
             return jsonify({"error": "Respuesta del modelo vacía o con formato inesperado."}), 500
 
     except requests.exceptions.RequestException as e:
-        return jsonify({"error": f"Error al comunicarse con la API de Gemini: {e}"}), 500
+        logger.exception("Error al comunicarse con Gemini")
+        return jsonify({"error": f"Error al comunicarse con la API de Gemini: {str(e)}"}), 500
     except Exception as e:
-        return jsonify({"error": f"Error inesperado en el servidor: {e}"}), 500
+        logger.exception("Error inesperado en /api/chat")
+        return jsonify({"error": f"Error inesperado en el servidor: {str(e)}"}), 500
 
 @app.route("/api/reset_chat", methods=["POST"])
 def reset_chat():
