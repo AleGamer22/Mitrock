@@ -280,147 +280,70 @@
     </div>
 
     <script>
-        const userInput = document.getElementById("user-input");
-        const chatLog = document.getElementById("chat-log");
-        let typingIndicator = document.getElementById("typing-indicator");
-
-        // Helper: sanitize minimal HTML -> keep selected formatting tags, remove scripts/attrs
-        function stripTags(html){
-            const div = document.createElement('div');
-            div.innerHTML = html;
-            return div.textContent || div.innerText || '';
-        }
-
-        function sanitizeHTML(html){
-            const template = document.createElement('template');
-            template.innerHTML = html;
-
-            const allowedTags = new Set(['strong','b','em','i','u','code','pre','a','br','p','ul','ol','li','span']);
-            const allowedAttrs = { a: ['href', 'target', 'rel'] };
-            const isSafeUrl = (url) => /^(https?:|mailto:|\/)/i.test(url);
-
-            function clean(node){
-                if (node.nodeType === Node.TEXT_NODE) return;
-                if (node.nodeType !== Node.ELEMENT_NODE) { node.remove(); return; }
-
-                const tag = node.tagName.toLowerCase();
-                if (!allowedTags.has(tag)){
-                    // unwrap node but keep children
-                    const parent = node.parentNode;
-                    while (node.firstChild) parent.insertBefore(node.firstChild, node);
-                    parent.removeChild(node);
-                    return;
-                }
-
-                // remove disallowed attributes
-                for (let i = node.attributes.length - 1; i >= 0; i--){
-                    const attr = node.attributes[i];
-                    const name = attr.name.toLowerCase();
-                    if (!((allowedAttrs[tag] || []).includes(name))){
-                        node.removeAttribute(attr.name);
-                    } else {
-                        // check safe hrefs
-                        if (tag === 'a' && name === 'href' && !isSafeUrl(attr.value)){
-                            node.removeAttribute('href');
-                        }
-                    }
-                }
-
-                // recurse children
-                Array.from(node.childNodes).forEach(child => clean(child));
-            }
-
-            Array.from(template.content.childNodes).forEach(child => clean(child));
-            return template.innerHTML;
-        }
-
-        // Normaliza artefactos de Markdown y convierte patrones básicos a HTML
-        function normalizeMarkdownArtifacts(text){
-            if (!text) return text;
-            // Convertir negritas/itálicas Markdown a HTML
-            text = text.replace(/\*\*(.+?)\*\*/gs, '<strong>$1</strong>'); // **bold**
-            text = text.replace(/__(.+?)__/gs, '<strong>$1</strong>');     // __bold__
-            text = text.replace(/\*(.+?)\*/gs, '<em>$1</em>');             // *italic*
-            text = text.replace(/_(.+?)_/gs, '<em>$1</em>');               // _italic_
-
-            // Convertir marcadores de lista que empiezan con "* " a viñetas (mejor que dejar asterisco)
-            text = text.replace(/(^|\n)\*\s+/g, '$1• ');
-
-            // Eliminar asteriscos sueltos que queden justo antes de una etiqueta o al inicio de línea
-            text = text.replace(/\*\s*(?=<)/g, '');       // "*<strong>" -> "<strong>"
-            text = text.replace(/(^|\n)\*\s+(?=\S)/g, '$1'); // "* texto" -> "texto"
-
-            // Quitar asteriscos aislados sobrantes
-            text = text.replace(/(^|\s)\*(\s|$)/g, '$1$2');
-            return text;
-        }
- 
-        // <-- Añadido: guardar historial en sessionStorage (evita ReferenceError)
-        function saveToHistory(role, content){
+        // Chats UI helpers
+        async function loadChatsList(){
             try {
-                const history = JSON.parse(sessionStorage.getItem('conversation_history') || '[]');
-                history.push({ role, content });
-                sessionStorage.setItem('conversation_history', JSON.stringify(history));
-            } catch (e) {
-                console.warn('No se pudo guardar el historial en sessionStorage:', e);
-            }
-        }
-        
-        function appendMessage(sender, text) {
-            const messageContainer = document.createElement("div");
-            messageContainer.classList.add("message-container");
-            const messageDiv = document.createElement("div");
- 
-            if (sender === 'user') {
-                messageDiv.classList.add('user-message');
-                messageDiv.textContent = text;
-                saveToHistory('user', text);
-            } else if (sender === 'bot') {
-                messageDiv.classList.add('bot-message');
-                // Normalizar artefactos Markdown antes de sanitizar para evitar asteriscos sueltos
-                const preprocessed = normalizeMarkdownArtifacts(text);
-                // render allowed HTML tags (sanitized) so <strong> se vea como negrita
-                const safeHtml = sanitizeHTML(preprocessed);
-                messageDiv.innerHTML = safeHtml;
-                saveToHistory('bot', safeHtml);
-            } else { // error or other
-                messageDiv.classList.add('error-message');
-                messageDiv.textContent = text;
-            }
- 
-            messageContainer.appendChild(messageDiv);
-            // Insert before typing indicator if present
-            if (typingIndicator && typingIndicator.parentElement === chatLog) {
-                chatLog.insertBefore(messageContainer, typingIndicator);
-            } else {
-                chatLog.appendChild(messageContainer);
-            }
-            chatLog.scrollTop = chatLog.scrollHeight;
+                const res = await fetch('/api/chats');
+                if (!res.ok) return;
+                const list = await res.json();
+                // minimal: if no chats create one
+                if (!list || list.length === 0){
+                    const created = await createChat("Chat 1", "gemini");
+                    return created;
+                }
+                // if no active chat set first
+                const active = sessionStorage.getItem('active_chat') || list[0].chat_id;
+                sessionStorage.setItem('active_chat', active);
+                // return active id
+                return active;
+            } catch (e){ console.warn(e); }
         }
 
-        function showTyping(show = true){
-            if (!typingIndicator) return;
-            if (show){
-                typingIndicator.classList.add('active');
-                typingIndicator.setAttribute('aria-hidden','false');
-                chatLog.scrollTop = chatLog.scrollHeight;
-            } else {
-                typingIndicator.classList.remove('active');
-                typingIndicator.setAttribute('aria-hidden','true');
-            }
+        async function createChat(title="Nuevo chat", model="gemini"){
+            const res = await fetch('/api/chats', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({title, model}) });
+            const j = await res.json();
+            sessionStorage.setItem('active_chat', j.chat_id);
+            // reload messages for this chat
+            await loadChat(j.chat_id);
+            return j.chat_id;
         }
 
-        async function sendMessage() {
-            const message = userInput.value.trim();
-            if (!message) return;
-            appendMessage("user", message);
-            userInput.value = "";
-            userInput.focus();
-
-            showTyping(true);
-
+        async function loadChat(chat_id){
             try {
-                const response = await fetch("/api/chat", {
+                const res = await fetch(`/api/chats/${chat_id}`);
+                if (!res.ok) return;
+                const chat = await res.json();
+                sessionStorage.setItem('active_chat', chat_id);
+                // render chat.messages into chatLog
+                chatLog.innerHTML = '';
+                (chat.messages || []).forEach(m => appendMessage(m.role === 'usuario' ? 'user' : m.role === 'user' ? 'user' : 'bot', m.content));
+                // ensure typing indicator present
+                if (!document.getElementById('typing-indicator')){
+                    const typingDiv = document.createElement('div');
+                    typingDiv.id = 'typing-indicator';
+                    typingDiv.className = 'bot-message typing';
+                    typingDiv.innerHTML = '<span></span><span></span><span></span>';
+                    chatLog.appendChild(typingDiv);
+                    typingIndicator = typingDiv;
+                } else {
+                    typingIndicator = document.getElementById('typing-indicator');
+                }
+            } catch (e){ console.warn(e); }
+        }
+
+        // override sendMessage -> send to active chat
+         async function sendMessage() {
+             const message = userInput.value.trim();
+             if (!message) return;
+             appendMessage("user", message);
+             userInput.value = "";
+             userInput.focus();
+
+             showTyping(true);
+
+             try {
+                const chatId = sessionStorage.getItem('active_chat') || await createChat();
+                const response = await fetch(`/api/chats/${chatId}/msg`, {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ message: message })
@@ -442,119 +365,67 @@
                     appendMessage("error", "Respuesta inesperada del servidor.");
                 }
 
-            } catch (error) {
-                showTyping(false);
-                appendMessage("error", `Error de conexión: ${error.message}`);
-            }
-        }
-
-        async function resetChat() {
-            try {
-                const response = await fetch("/api/reset_chat", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" }
-                });
-
-                if (response.ok) {
-                    sessionStorage.removeItem('conversation_history');
-                    chatLog.innerHTML = '<div class="message-container"><div class="bot-message">Chat reiniciado. Envia un mensaje para empezar!</div></div>';
-                    // recreate typing indicator
-                    const typingDiv = document.createElement('div');
-                    typingDiv.id = 'typing-indicator';
-                    typingDiv.className = 'bot-message typing';
-                    typingDiv.innerHTML = '<span></span><span></span><span></span>';
-                    chatLog.appendChild(typingDiv);
-                    typingIndicator = typingDiv;
-                } else {
-                    const errorData = await response.json();
-                    appendMessage("error", `Error al reiniciar el chat: ${errorData.error || 'Error desconocido'}`);
-                }
-            } catch (err){
-                appendMessage("error", `Error al reiniciar: ${err.message}`);
-            }
-        }
-
-        async function regenerateResponse() {
-            const conversationHistory = JSON.parse(sessionStorage.getItem('conversation_history') || '[]');
-            // Find last bot entry and previous user
-            let lastBotIndex = -1;
-            for (let i = conversationHistory.length - 1; i >= 0; i--){
-                if (conversationHistory[i].role === 'bot'){ lastBotIndex = i; break; }
-            }
-            if (lastBotIndex > 0){
-                const lastUser = conversationHistory[lastBotIndex - 1];
-                if (!lastUser || lastUser.role !== 'user'){
-                    appendMessage("error", "No se encontró un mensaje de usuario previo para regenerar.");
-                    return;
-                }
-                const lastUserMessage = lastUser.content;
-                showTyping(true);
-                try {
-                    const response = await fetch("/api/regenerate", {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ message: lastUserMessage })
-                    });
-                    showTyping(false);
-                    if (response.ok) {
-                        const data = await response.json();
-                        if (data.response) {
-                            // remove last bot message from history and DOM
-                            // remove last bot message element in DOM
-                            const botEls = Array.from(chatLog.querySelectorAll('.bot-message')).filter(el => !el.classList.contains('typing'));
-                            if (botEls.length) {
-                                const lastBotEl = botEls[botEls.length -1];
-                                const parent = lastBotEl.parentElement;
-                                if (parent) parent.remove();
-                            }
-                            // update history
-                            conversationHistory.splice(lastBotIndex, 1);
-                            conversationHistory.push({ role: 'bot', content: data.response });
-                            sessionStorage.setItem('conversation_history', JSON.stringify(conversationHistory));
-                            appendMessage("bot", data.response);
-                        } else if (data.error) {
-                            appendMessage("error", `Error al regenerar: ${data.error}`);
-                        } else {
-                            appendMessage("error", "Respuesta inesperada al regenerar.");
-                        }
-                    } else {
-                        appendMessage("error", `Error del servidor al regenerar: ${response.statusText}`);
-                    }
-                } catch (error) {
-                    showTyping(false);
-                    appendMessage("error", `Error de conexión al regenerar: ${error.message}`);
-                }
-            } else {
-                appendMessage("error", "No hay respuesta del bot para regenerar.");
-            }
-        }
-
-        userInput.addEventListener("keydown", function(event) {
-            if (event.key === "Enter" && !event.shiftKey) {
-                event.preventDefault();
-                sendMessage();
-            }
-        });
-
-        window.addEventListener('load', () => {
+             } catch (error) {
+                 showTyping(false);
+                 appendMessage("error", `Error de conexión: ${error.message}`);
+             }
+         }
++
++        // adapt reset/regenerate to active chat
++        async function resetChat(){
++            const chatId = sessionStorage.getItem('active_chat');
++            if (!chatId) return;
++            const res = await fetch(`/api/chats/${chatId}/reset`, {method:'POST'});
++            if (res.ok){
++                sessionStorage.removeItem('conversation_history');
++                chatLog.innerHTML = '<div class="message-container"><div class="bot-message">Chat reiniciado. Envia un mensaje para empezar!</div></div>';
++            } else {
++                appendMessage('error','No se pudo reiniciar el chat.');
++            }
++        }
++
++        async function regenerateResponse(){
++            const chatId = sessionStorage.getItem('active_chat');
++            if (!chatId) return appendMessage('error','No chat activo.');
++            // reuse existing logic but call /api/chats/:id/regenerate
++            showTyping(true);
++            try {
++                const response = await fetch(`/api/chats/${chatId}/regenerate`, { method:'POST', headers:{'Content-Type':'application/json'} });
++                showTyping(false);
++                const data = await response.json();
++                if (data.response) appendMessage('bot', data.response);
++                else appendMessage('error', data.error || 'Error al regenerar');
++            } catch (e){ showTyping(false); appendMessage('error', e.message); }
++        }
++
++        // On load: ensure a chat exists and load it
+         window.addEventListener('load', () => {
             userInput.focus();
-            const storedHistory = JSON.parse(sessionStorage.getItem('conversation_history') || '[]');
-            // Restore messages
-            storedHistory.forEach(msg => {
-                appendMessage(msg.role, msg.content);
+            loadChatsList().then(activeId => {
+                const id = sessionStorage.getItem('active_chat') || activeId;
+                if (id) loadChat(id);
             });
-            // Ensure typing indicator exists and reference is up-to-date
-            if (!document.getElementById('typing-indicator')) {
-                const typingDiv = document.createElement('div');
-                typingDiv.id = 'typing-indicator';
-                typingDiv.className = 'bot-message typing';
-                typingDiv.innerHTML = '<span></span><span></span><span></span>';
-                chatLog.appendChild(typingDiv);
-                typingIndicator = typingDiv;
-            } else {
-                typingIndicator = document.getElementById('typing-indicator');
-            }
-        });
+             // Ensure typing indicator exists and reference is up-to-date
+-            if (!document.getElementById('typing-indicator')) {
+-                const typingDiv = document.createElement('div');
+-                typingDiv.id = 'typing-indicator';
+-                typingDiv.className = 'bot-message typing';
+-                typingDiv.innerHTML = '<span></span><span></span><span></span>';
+-                chatLog.appendChild(typingDiv);
+-                typingIndicator = typingDiv;
+-            } else {
+-                typingIndicator = document.getElementById('typing-indicator');
+-            }
++            // typingIndicator will be set by loadChat or created below if needed
++            setTimeout(()=>{ if (!document.getElementById('typing-indicator')) {
++                const typingDiv = document.createElement('div');
++                typingDiv.id = 'typing-indicator';
++                typingDiv.className = 'bot-message typing';
++                typingDiv.innerHTML = '<span></span><span></span><span></span>';
++                chatLog.appendChild(typingDiv);
++                typingIndicator = typingDiv;
++            }}, 100);
+         });
     </script>
 </body>
 </html>
