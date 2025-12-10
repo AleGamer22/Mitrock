@@ -334,7 +334,28 @@
             return template.innerHTML;
         }
 
-        // Añadido: guardar historial en sessionStorage (evita ReferenceError)
+        // Normaliza artefactos de Markdown y convierte patrones básicos a HTML
+        function normalizeMarkdownArtifacts(text){
+            if (!text) return text;
+            // Convertir negritas/itálicas Markdown a HTML
+            text = text.replace(/\*\*(.+?)\*\*/gs, '<strong>$1</strong>'); // **bold**
+            text = text.replace(/__(.+?)__/gs, '<strong>$1</strong>');     // __bold__
+            text = text.replace(/\*(.+?)\*/gs, '<em>$1</em>');             // *italic*
+            text = text.replace(/_(.+?)_/gs, '<em>$1</em>');               // _italic_
+
+            // Convertir marcadores de lista que empiezan con "* " a viñetas (mejor que dejar asterisco)
+            text = text.replace(/(^|\n)\*\s+/g, '$1• ');
+
+            // Eliminar asteriscos sueltos que queden justo antes de una etiqueta o al inicio de línea
+            text = text.replace(/\*\s*(?=<)/g, '');       // "*<strong>" -> "<strong>"
+            text = text.replace(/(^|\n)\*\s+(?=\S)/g, '$1'); // "* texto" -> "texto"
+
+            // Quitar asteriscos aislados sobrantes
+            text = text.replace(/(^|\s)\*(\s|$)/g, '$1$2');
+            return text;
+        }
+ 
+        // <-- Añadido: guardar historial en sessionStorage (evita ReferenceError)
         function saveToHistory(role, content){
             try {
                 const history = JSON.parse(sessionStorage.getItem('conversation_history') || '[]');
@@ -349,22 +370,24 @@
             const messageContainer = document.createElement("div");
             messageContainer.classList.add("message-container");
             const messageDiv = document.createElement("div");
-
+ 
             if (sender === 'user') {
                 messageDiv.classList.add('user-message');
                 messageDiv.textContent = text;
                 saveToHistory('user', text);
             } else if (sender === 'bot') {
                 messageDiv.classList.add('bot-message');
+                // Normalizar artefactos Markdown antes de sanitizar para evitar asteriscos sueltos
+                const preprocessed = normalizeMarkdownArtifacts(text);
                 // render allowed HTML tags (sanitized) so <strong> se vea como negrita
-                const safeHtml = sanitizeHTML(text);
+                const safeHtml = sanitizeHTML(preprocessed);
                 messageDiv.innerHTML = safeHtml;
                 saveToHistory('bot', safeHtml);
             } else { // error or other
                 messageDiv.classList.add('error-message');
                 messageDiv.textContent = text;
             }
-
+ 
             messageContainer.appendChild(messageDiv);
             // Insert before typing indicator if present
             if (typingIndicator && typingIndicator.parentElement === chatLog) {
