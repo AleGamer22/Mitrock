@@ -1,0 +1,14 @@
+{
+  "name": "mitrock-chatbot",
+  "version": "1.0.0",
+  "description": "Mitrock AI Chatbot with multi-session support",
+  "scripts": {
+    "build-css": "tailwindcss -i ./src/css/input.css -o ./static/css/output.css --watch",
+    "build-css-prod": "tailwindcss -i ./src/css/input.css -o ./static/css/output.css --minify"
+  },
+  "devDependencies": {
+    "tailwindcss": "^3.4.0",
+    "postcss": "^8.4.0",
+    "autoprefixer": "^10.4.0"
+  }
+}
