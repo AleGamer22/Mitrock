@@ -3,152 +3,209 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tamachi Studios S.L. - Vanguardia Tecnológica</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <title>Tamachi Studios S.L. | Vanguardia Tecnológica de Proximidad</title>
+    
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- CSS Corporativo Tamachi Studios -->
     <style>
-:root {
-    --bg-base: #030303;
-    --bg-surface: #0a0a0a;
-    --bg-card: #0f0f0f;
-    --border-light: rgba(255, 255, 255, 0.08);
-    --border-hover: rgba(255, 255, 255, 0.2);
-    --text-main: #ededed;
-    --text-muted: #888888;
-    --radius: 12px;
-}
+        @layer base {
+            :root {
+                --bg-base: #030303;
+                --bg-surface: #0a0a0a;
+                --bg-card: #0f0f0f;
+                --border-light: rgba(255, 255, 255, 0.08);
+                --border-hover: rgba(255, 255, 255, 0.25);
+                --text-main: #ededed;
+                --text-muted: #888888;
+                --radius: 12px;
+            }
 
-html { scroll-behavior: smooth; }
+            html { scroll-behavior: smooth; }
 
-body {
-    background-color: var(--bg-base);
-    color: var(--text-main);
-    font-family: 'Inter', system-ui, -apple-system, sans-serif;
-    -webkit-font-smoothing: antialiased;
-    min-height: 100vh;
-    position: relative;
-}
+            body {
+                background-color: var(--bg-base);
+                color: var(--text-main);
+                font-family: 'Inter', system-ui, -apple-system, sans-serif;
+                -webkit-font-smoothing: antialiased;
+                margin: 0;
+                min-height: 100vh;
+                position: relative;
+            }
 
-body::before {
-    content: "";
-    position: fixed;
-    inset: 0;
-    pointer-events: none;
-    opacity: 0.04;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch' /%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' /%3E%3C/svg%3E");
-    z-index: 50;
-}
+            /* Efecto Noise Grain */
+            body::before {
+                content: ""; position: fixed; inset: 0; pointer-events: none; opacity: 0.04;
+                background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch' /%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' /%3E%3C/svg%3E");
+                z-index: 50;
+            }
+        }
 
-.glass-nav {
-    background: rgba(3, 3, 3, 0.7);
-    backdrop-filter: blur(12px);
-    border-bottom: 1px solid var(--border-light);
-}
+        /* Componentes */
+        .glass-nav {
+            position: sticky; top: 0; z-index: 40;
+            background: rgba(3, 3, 3, 0.8);
+            backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+            border-bottom: 1px solid var(--border-light);
+            transition: background 0.3s ease;
+        }
 
-.tamachi-card {
-    background-color: var(--bg-card);
-    border: 1px solid var(--border-light);
-    border-radius: var(--radius);
-    transition: transform 0.3s ease, border-color 0.3s ease;
-}
+        .brand-logo {
+            width: 36px; height: 36px; background: #ffffff; color: #000000;
+            display: inline-flex; align-items: center; justify-content: center;
+            font-weight: 800; font-size: 1.25rem; border-radius: 6px; letter-spacing: -1px;
+            box-shadow: 0 4px 14px rgba(255,255,255,0.1);
+        }
 
-.tamachi-card:hover {
-    transform: translateY(-4px);
-    border-color: var(--border-hover);
-}
+        .tamachi-card {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-light);
+            border-radius: var(--radius);
+            padding: 2.5rem;
+            transition: transform 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+        .tamachi-card:hover {
+            transform: translateY(-6px);
+            border-color: var(--border-hover);
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+        }
 
-.btn-primary {
-    background: #ffffff;
-    color: #000000;
-    font-weight: 600;
-    padding: 10px 24px;
-    border-radius: 6px;
-    transition: transform 0.2s ease;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-}
+        .btn-primary {
+            background: #ffffff; color: #000000; font-weight: 600; padding: 12px 28px;
+            border-radius: 6px; transition: transform 0.2s ease, opacity 0.2s ease;
+            display: inline-flex; align-items: center; justify-content: center;
+        }
+        .btn-primary:hover { transform: scale(1.03); opacity: 0.9; }
 
-.btn-primary:hover {
-    transform: scale(1.02);
-}
+        .btn-outline {
+            background: transparent; color: var(--text-main); border: 1px solid var(--border-light);
+            padding: 12px 28px; border-radius: 6px; transition: all 0.2s ease; font-weight: 500;
+        }
+        .btn-outline:hover { background: rgba(255,255,255,0.06); border-color: var(--text-muted); }
 
-.btn-outline {
-    background: transparent;
-    color: var(--text-main);
-    border: 1px solid var(--border-light);
-    padding: 10px 24px;
-    border-radius: 6px;
-    transition: all 0.2s ease;
-}
-
-.btn-outline:hover {
-    background: rgba(255,255,255,0.05);
-    border-color: var(--text-muted);
-}
-
-.brand-logo {
-    width: 36px;
-    height: 36px;
-    background: #ffffff;
-    color: #000000;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: 800;
-    font-size: 1.2rem;
-    border-radius: 6px;
-}
+        .gradient-text {
+            background: linear-gradient(to right, #ffffff, #888888);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        }
     </style>
 </head>
-<body class="min-h-screen">
-    <!-- Navbar -->
-    <nav class="glass-nav sticky top-0 z-50 flex justify-between items-center p-6">
-        <div class="brand-logo">T</div>
-        <div class="flex space-x-6">
-            <a href="/" class="hover:text-gray-300 transition-all">Inicio</a>
-            <a href="/servicios" class="hover:text-gray-300 transition-all">Servicios</a>
-            <a href="/nosotros" class="hover:text-gray-300 transition-all">Filosofía</a>
+<body class="antialiased selection:bg-white selection:text-black">
+
+    <!-- Navegación -->
+    <nav class="glass-nav">
+        <div class="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
+            <div class="flex items-center gap-4 cursor-pointer" onclick="window.scrollTo(0,0)">
+                <div class="brand-logo">T</div>
+                <span class="font-bold tracking-wide text-lg hidden sm:block">Tamachi Studios S.L.</span>
+            </div>
+            
+            <div class="hidden md:flex gap-8 text-sm font-medium text-gray-400">
+                <a href="/" class="text-white hover:text-white transition">Inicio</a>
+                <a href="/servicios" class="hover:text-white transition">Servicios</a>
+                <a href="/nosotros" class="hover:text-white transition">Filosofía</a>
+            </div>
+
+            <div>
+                <a href="/ia" class="btn-outline text-sm py-2 px-4 flex items-center gap-2">
+                    <span class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
+                    Tamachi-Diagnostic
+                </a>
+            </div>
         </div>
-        <a href="/ia" class="btn-primary">Tamachi-Diagnostic</a>
     </nav>
 
     <!-- Hero Section -->
-    <section class="text-center py-20 px-6 animate-fade-in-up">
-        <h1 class="text-6xl md:text-8xl font-bold mb-6">Vanguardia Tecnológica de Proximidad</h1>
-        <p class="text-xl md:text-2xl text-gray-400 max-w-4xl mx-auto">Infraestructura, redes y optimización radical de hardware para PYMES.</p>
-    </section>
+    <section class="relative flex flex-col items-center justify-center text-center px-6 min-h-[85vh] overflow-hidden">
+        <!-- Luces de fondo sutiles -->
+        <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-white opacity-[0.02] blur-[100px] rounded-full pointer-events-none"></div>
 
-    <!-- Tamachi-Diagnostic Section -->
-    <section class="py-16 px-6 bg-gray-900 animate-fade-in-up">
-        <div class="max-w-4xl mx-auto text-center">
-            <h2 class="text-4xl font-bold mb-4">Tamachi-Diagnostic</h2>
-            <p class="text-lg text-gray-400 mb-8">Nuestra IA de triaje técnico resuelve el 70% de incidencias remotamente. Prueba nuestra plataforma de diagnóstico inteligente.</p>
-            <a href="/ia" class="btn-primary">Acceder al Diagnóstico IA</a>
+        <div class="z-10 max-w-4xl mx-auto flex flex-col items-center">
+            <div class="border border-white/10 rounded-full px-4 py-1 text-xs text-gray-400 mb-8 tracking-widest uppercase flex items-center gap-2">
+                Operando en Madrid
+            </div>
+            
+            <h1 class="text-5xl md:text-7xl font-extrabold tracking-tight mb-6 leading-tight">
+                Vanguardia Tecnológica <br>
+                <span class="gradient-text">de Proximidad.</span>
+            </h1>
+            
+            <p class="text-lg md:text-xl text-gray-400 max-w-2xl mx-auto mb-10 leading-relaxed">
+                No somos un servicio técnico más. Somos los arquitectos de tu infraestructura. Especialistas en optimización radical de hardware, redes y soluciones integrales para PYMES.
+            </p>
+            
+            <div class="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
+                <a href="/ia" class="btn-primary">
+                    Iniciar Triaje IA
+                    <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+                </a>
+                <a href="/servicios" class="btn-outline">
+                    Ver Servicios
+                </a>
+            </div>
         </div>
     </section>
 
-    <!-- Pilares Section -->
-    <section class="py-20 px-6 animate-fade-in-up">
-        <div class="max-w-6xl mx-auto grid md:grid-cols-3 gap-8">
-            <a href="/servicios" class="tamachi-card p-8">
-                <h3 class="text-2xl font-bold mb-4">Reparación Radical</h3>
-                <p class="text-gray-400">No tires tu equipo. Lo llevamos al límite con actualizaciones y mantenimiento extremo.</p>
-            </a>
-            <a href="/servicios" class="tamachi-card p-8">
-                <h3 class="text-2xl font-bold mb-4">Redes</h3>
-                <p class="text-gray-400">Auditoría y despliegue de infraestructuras de red corporativas.</p>
-            </a>
-            <a href="/servicios" class="tamachi-card p-8">
-                <h3 class="text-2xl font-bold mb-4">Segunda Vida</h3>
-                <p class="text-gray-400">Economía circular: reacondicionamiento y reducción de la brecha digital.</p>
-            </a>
+    <!-- Pilares Corporativos (Cards) -->
+    <section class="py-24 px-6 border-t border-white/5 bg-[#080808]">
+        <div class="max-w-7xl mx-auto">
+            <div class="text-center mb-16">
+                <h2 class="text-3xl md:text-4xl font-bold mb-4">Nuestros Pilares</h2>
+                <p class="text-gray-400">Soluciones técnicas llevadas al extremo.</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                
+                <!-- Card 1: Redes -->
+                <div class="tamachi-card group cursor-pointer" onclick="window.location.href='/servicios'">
+                    <div class="w-12 h-12 border border-white/20 rounded-lg flex items-center justify-center mb-6 group-hover:bg-white group-hover:text-black transition-colors duration-300">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 002-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
+                    </div>
+                    <h3 class="text-xl font-bold mb-3 text-white">Sistemas y Redes</h3>
+                    <p class="text-gray-400 text-sm leading-relaxed">
+                        Despliegue y auditoría de infraestructuras. Configuración avanzada de servidores DNS (BIND9), DHCP y Apache2 para entornos corporativos seguros.
+                    </p>
+                </div>
+
+                <!-- Card 2: Reparación Radical -->
+                <div class="tamachi-card group cursor-pointer" onclick="window.location.href='/servicios'">
+                    <div class="w-12 h-12 border border-white/20 rounded-lg flex items-center justify-center mb-6 group-hover:bg-white group-hover:text-black transition-colors duration-300">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                    </div>
+                    <h3 class="text-xl font-bold mb-3 text-white">Reparación Radical</h3>
+                    <p class="text-gray-400 text-sm leading-relaxed">
+                        No tires tu equipo. Lo llevamos al límite. Actualizaciones a discos NVMe/SSD, mantenimiento térmico de CPU/GPU y maximización de rendimiento.
+                    </p>
+                </div>
+
+                <!-- Card 3: Segunda Vida -->
+                <div class="tamachi-card group cursor-pointer" onclick="window.location.href='/servicios'">
+                    <div class="w-12 h-12 border border-white/20 rounded-lg flex items-center justify-center mb-6 group-hover:bg-white group-hover:text-black transition-colors duration-300">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                    </div>
+                    <h3 class="text-xl font-bold mb-3 text-white">Programa Segunda Vida</h3>
+                    <p class="text-gray-400 text-sm leading-relaxed">
+                        Economía circular aplicada al sector IT. Reacondicionamiento de equipos empresariales para reducir la brecha digital y el impacto ambiental.
+                    </p>
+                </div>
+
+            </div>
         </div>
     </section>
 
     <!-- Footer -->
-    <footer class="py-8 px-6 border-t border-gray-700 text-center text-gray-500">
-        <p>&copy; 2024 Tamachi Studios S.L. Todos los derechos reservados.</p>
+    <footer class="border-t border-white/10 py-12 px-6">
+        <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6">
+            <div class="flex items-center gap-3">
+                <div class="brand-logo scale-75">T</div>
+                <span class="text-sm text-gray-500">© 2026 Tamachi Studios S.L. Madrid.</span>
+            </div>
+            <div class="text-sm text-gray-500 flex gap-6">
+                <a href="#" class="hover:text-white transition">Política de Privacidad</a>
+                <a href="#" class="hover:text-white transition">Aviso Legal</a>
+            </div>
+        </div>
     </footer>
+
 </body>
 </html>
