@@ -473,7 +473,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tamachi-Diagnostic // Sesión de Triaje</title>
+    <title>Tamachi-Diagnostic // IA de Triaje</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         :root {
@@ -491,7 +491,7 @@
         html, body {
             height: 100%;
             margin: 0;
-            font-family: "Segoe UI", Roboto, Inter, system-ui, -apple-system, "Helvetica Neue", Arial;
+            font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
             -webkit-font-smoothing: antialiased;
             -moz-osx-font-smoothing: grayscale;
             background:
@@ -535,42 +535,33 @@
         #chat-header {
             display: flex;
             align-items: center;
+            justify-content: space-between;
             gap: 16px;
             padding: 14px 20px;
             border-bottom: 1px solid rgba(255,255,255,0.03);
             background: linear-gradient(90deg, rgba(255,255,255,0.01), rgba(255,255,255,0.00));
         }
 
-        #brand {
-            display: flex;
-            gap: 12px;
-            align-items: center;
-        }
-
-        #brand .logo {
-            width: 40px;
-            height: 40px;
-            border-radius: 8px;
-            background: linear-gradient(135deg, var(--accent), var(--accent-2));
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            color: #031022;
-            font-weight: 700;
-            box-shadow: 0 8px 24px rgba(123,97,255,0.12);
-        }
-
-        #chat-header h1 {
+        #brand h1 {
             margin: 0;
             font-size: 1.05rem;
             color: var(--muted-strong);
             letter-spacing: 0.2px;
         }
 
-        #chat-header .subtitle {
+        #reset-button {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
             color: var(--muted);
+            padding: 8px 16px;
+            border-radius: 8px;
             font-size: 0.85rem;
-            margin-left: auto;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+
+        #reset-button:hover {
+            background: rgba(255,255,255,0.1);
         }
 
         #chat-log {
@@ -621,6 +612,7 @@
             font-size: 0.98rem;
             line-height: 1.5;
             position: relative;
+            border-left: 2px solid rgba(255,255,255,0.1);
         }
 
         .user-message {
@@ -649,7 +641,7 @@
             align-items: center;
             gap: 8px;
             background: transparent;
-            box-shadow: none;
+            border: none;
             color: var(--muted);
             padding: 8px 12px;
         }
@@ -672,6 +664,16 @@
             0% { transform: translateY(0) scale(.6); opacity: .35; }
             50% { transform: translateY(-6px) scale(1); opacity: 1; }
             100% { transform: translateY(0) scale(.6); opacity: .35; }
+        }
+
+        .message-actions {
+            display: none;
+            gap: 8px;
+            margin-top: 8px;
+        }
+
+        .user-message:hover .message-actions {
+            display: flex;
         }
 
         #input-area {
@@ -737,15 +739,10 @@
 <body>
     <div id="chat-container">
         <header id="chat-header">
-            <a href="/" class="text-slate-400 hover:text-white transition">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-                </svg>
-            </a>
             <div id="brand">
-                <div class="logo">T</div>
-                <h1>Tamachi-Diagnostic // Sesión de Triaje</h1>
+                <h1>Tamachi-Diagnostic // IA de Triaje</h1>
             </div>
+            <button id="reset-button">Reiniciar Sesión</button>
         </header>
 
         <div id="chat-log">
@@ -766,18 +763,28 @@
         const chatLog = document.getElementById('chat-log');
         const userInput = document.getElementById('user-input');
         const sendButton = document.getElementById('send-button');
+        const resetButton = document.getElementById('reset-button');
         const typingIndicator = document.createElement('div');
         typingIndicator.className = 'message-container bot-message typing';
-        typingIndicator.innerHTML = '<span></span><span></span><span></span>';
+        typingIndicator.innerHTML = '<span></span><span></span><span></span>Analizando sistema...';
 
         let conversationHistory = JSON.parse(sessionStorage.getItem('tamachiChatHistory')) || [];
+        let lastUserMessage = '';
 
         function renderMessage(message, isUser = false) {
             const messageDiv = document.createElement('div');
             messageDiv.className = `message-container ${isUser ? 'user-message' : 'bot-message'}`;
-            messageDiv.innerHTML = message;
+            if (isUser) {
+                messageDiv.innerHTML = `${message}<div class="message-actions"><button class="regenerate-btn" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: var(--muted); padding: 4px 8px; border-radius: 4px; font-size: 0.8rem; cursor: pointer;">Regenerar</button></div>`;
+            } else {
+                messageDiv.innerHTML = message;
+            }
             chatLog.appendChild(messageDiv);
             chatLog.scrollTop = chatLog.scrollHeight;
+
+            if (isUser) {
+                messageDiv.querySelector('.regenerate-btn').addEventListener('click', () => regenerateResponse(message));
+            }
         }
 
         function showTypingIndicator() {
@@ -796,6 +803,7 @@
             if (!message) return;
 
             renderMessage(message, true);
+            lastUserMessage = message;
             conversationHistory.push({ role: 'user', content: message });
             sessionStorage.setItem('tamachiChatHistory', JSON.stringify(conversationHistory));
 
@@ -834,6 +842,64 @@
             });
         }
 
+        function regenerateResponse(userMessage) {
+            showTypingIndicator();
+
+            fetch('/api/regenerate', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ message: userMessage }),
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`Error ${response.status}: ${response.statusText}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                hideTypingIndicator();
+                if (data.response) {
+                    // Remove the last bot message and add the new one
+                    const lastMessage = chatLog.lastElementChild;
+                    if (lastMessage && lastMessage.classList.contains('bot-message') && !lastMessage.classList.contains('typing')) {
+                        chatLog.removeChild(lastMessage);
+                        conversationHistory.pop();
+                    }
+                    renderMessage(data.response);
+                    conversationHistory.push({ role: 'bot', content: data.response });
+                    sessionStorage.setItem('tamachiChatHistory', JSON.stringify(conversationHistory));
+                } else if (data.error) {
+                    renderMessage(`Error: ${data.error}`, false);
+                }
+            })
+            .catch(error => {
+                hideTypingIndicator();
+                renderMessage('Lo siento, hay una incidencia en la red. Inténtalo de nuevo más tarde.', false);
+                console.error('Error:', error);
+            });
+        }
+
+        function resetSession() {
+            fetch('/api/reset_chat', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            })
+            .then(response => response.json())
+            .then(data => {
+                chatLog.innerHTML = '';
+                conversationHistory = [];
+                sessionStorage.removeItem('tamachiChatHistory');
+                lastUserMessage = '';
+            })
+            .catch(error => {
+                console.error('Error resetting chat:', error);
+            });
+        }
+
         function loadHistory() {
             conversationHistory.forEach(msg => {
                 renderMessage(msg.content, msg.role === 'user');
@@ -853,368 +919,9 @@
             userInput.style.height = userInput.scrollHeight + 'px';
         });
 
+        resetButton.addEventListener('click', resetSession);
+
         loadHistory();
-    </script>
-</body>
-</html>
-
-        .btn-send{
-            background: linear-gradient(180deg,var(--accent), var(--accent-2));
-            color:#041224;
-            border:none;
-            padding:10px 14px;
-            border-radius:10px;
-            cursor:pointer;
-            font-weight:600;
-            letter-spacing:0.2px;
-            transition: transform .12s ease, box-shadow .12s ease, opacity .12s ease;
-            box-shadow: 0 8px 24px rgba(123,97,255,0.12);
-        }
-        .btn-send:hover{ transform: translateY(-3px); opacity:0.98; box-shadow: 0 18px 42px rgba(123,97,255,0.16); }
-        .btn-send:active{ transform: translateY(-1px); }
-
-        #chat-buttons{ display:flex; gap:12px; padding:12px 20px; justify-content:flex-end; border-top: 1px solid rgba(255,255,255,0.02); background:transparent; }
-        #chat-buttons .btn-secondary{ background: rgba(255,255,255,0.02); color:var(--muted); padding:8px 12px; border-radius:10px; box-shadow:none; cursor:pointer; }
-        #chat-buttons .btn-secondary:hover{ background: rgba(255,255,255,0.03); color: var(--muted-strong); }
-
-        /* Watermark */
-        #watermark{ position:absolute; bottom:18px; right:18px; opacity:0.9; filter: drop-shadow(0 8px 20px rgba(0,0,0,0.6)); }
-        #watermark img{ width:64px; height:64px; border-radius:50%; object-fit:cover; border:3px solid rgba(255,255,255,0.03); }
-
-        /* Responsive adjustments - prefer desktop but adapt to mobile */
-        @media (max-width:900px){
-            #chat-container{ grid-template-rows: 64px 1fr auto; }
-            #chat-log{ padding:18px; gap:14px; }
-            .message-container{ max-width:86%; }
-            #chat-header h1{ font-size:1rem; }
-        }
-        @media (max-width:520px){
-            #chat-container{ padding-bottom:0; }
-            #chat-header{ padding:12px 14px; }
-            #brand .logo{ width:36px; height:36px; }
-            #user-input{ padding:12px; font-size:0.96rem; }
-            .message-container{ max-width:92%; }
-            #chat-buttons{ padding:8px 12px; justify-content:space-between; }
-            #watermark{ display:none; }
-        }
-
-    </style>
-</head>
-<body>
-    <div id="chat-container">
-        <div id="chat-header">
-            <div id="brand">
-                <div class="logo">M</div>
-                <div>
-                    <h1>Tamachi IA</h1>
-                    <div class="subtitle">Asistente inteligente</div>
-                </div>
-            </div>
-            <div class="subtitle">Preferencia PC · Responsive</div>
-        </div>
-
-        <div id="chat-log" role="log" aria-live="polite">
-            <div class="message-container">
-                <div class="bot-message">Envia un mensaje para empezar!</div>
-            </div>
-            <div id="typing-indicator" class="bot-message typing" aria-hidden="true">
-                <span></span><span></span><span></span>
-            </div>
-        </div>
-
-        <div id="input-area" role="region" aria-label="Entrada de mensaje">
-            <input type="text" id="user-input" placeholder="Escribe tu mensaje y presiona Enter..." autocomplete="off" />
-            <button type="button" class="btn-send" onclick="sendMessage()">Enviar</button>
-        </div>
-
-        <div id="chat-buttons">
-            <button class="btn-secondary" onclick="resetChat()">Reiniciar IA</button>
-            <button class="btn-secondary" onclick="regenerateResponse()">Regenerar Respuesta</button>
-        </div>
-
-        <div id="watermark">
-            <a href="https://www.youtube.com/@AleNationVibes" target="_blank" rel="noopener noreferrer">
-                <img src="https://yt3.googleusercontent.com/6dHA4A14WdEOq_yGMebxHmgUtin9WVNNOEqYPU_QqZh_1hGatrZVeia24m6qpoyMz7aNwsSRhA=s160-c-k-c0x00ffffff-no-rj" alt="Logo Tamachi IA">
-            </a>
-        </div>
-    </div>
-
-    <script>
-        const userInput = document.getElementById("user-input");
-        const chatLog = document.getElementById("chat-log");
-        let typingIndicator = document.getElementById("typing-indicator");
-
-        // Helper: sanitize minimal HTML -> keep selected formatting tags, remove scripts/attrs
-        function stripTags(html){
-            const div = document.createElement('div');
-            div.innerHTML = html;
-            return div.textContent || div.innerText || '';
-        }
-
-        function sanitizeHTML(html){
-            const template = document.createElement('template');
-            template.innerHTML = html;
-
-            const allowedTags = new Set(['strong','b','em','i','u','code','pre','a','br','p','ul','ol','li','span']);
-            const allowedAttrs = { a: ['href', 'target', 'rel'] };
-            const isSafeUrl = (url) => /^(https?:|mailto:|\/)/i.test(url);
-
-            function clean(node){
-                if (node.nodeType === Node.TEXT_NODE) return;
-                if (node.nodeType !== Node.ELEMENT_NODE) { node.remove(); return; }
-
-                const tag = node.tagName.toLowerCase();
-                if (!allowedTags.has(tag)){
-                    // unwrap node but keep children
-                    const parent = node.parentNode;
-                    while (node.firstChild) parent.insertBefore(node.firstChild, node);
-                    parent.removeChild(node);
-                    return;
-                }
-
-                // remove disallowed attributes
-                for (let i = node.attributes.length - 1; i >= 0; i--){
-                    const attr = node.attributes[i];
-                    const name = attr.name.toLowerCase();
-                    if (!((allowedAttrs[tag] || []).includes(name))){
-                        node.removeAttribute(attr.name);
-                    } else {
-                        // check safe hrefs
-                        if (tag === 'a' && name === 'href' && !isSafeUrl(attr.value)){
-                            node.removeAttribute('href');
-                        }
-                    }
-                }
-
-                // recurse children
-                Array.from(node.childNodes).forEach(child => clean(child));
-            }
-
-            Array.from(template.content.childNodes).forEach(child => clean(child));
-            return template.innerHTML;
-        }
-
-        // Normaliza artefactos de Markdown y convierte patrones básicos a HTML
-        function normalizeMarkdownArtifacts(text){
-            if (!text) return text;
-            // Convertir negritas/itálicas Markdown a HTML
-            text = text.replace(/\*\*(.+?)\*\*/gs, '<strong>$1</strong>'); // **bold**
-            text = text.replace(/__(.+?)__/gs, '<strong>$1</strong>');     // __bold__
-            text = text.replace(/\*(.+?)\*/gs, '<em>$1</em>');             // *italic*
-            text = text.replace(/_(.+?)_/gs, '<em>$1</em>');               // _italic_
-
-            // Convertir marcadores de lista que empiezan con "* " a viñetas (mejor que dejar asterisco)
-            text = text.replace(/(^|\n)\*\s+/g, '$1• ');
-
-            // Eliminar asteriscos sueltos que queden justo antes de una etiqueta o al inicio de línea
-            text = text.replace(/\*\s*(?=<)/g, '');       // "*<strong>" -> "<strong>"
-            text = text.replace(/(^|\n)\*\s+(?=\S)/g, '$1'); // "* texto" -> "texto"
-
-            // Quitar asteriscos aislados sobrantes
-            text = text.replace(/(^|\s)\*(\s|$)/g, '$1$2');
-            return text;
-        }
- 
-        // <-- Añadido: guardar historial en sessionStorage (evita ReferenceError)
-        function saveToHistory(role, content){
-            try {
-                const history = JSON.parse(sessionStorage.getItem('conversation_history') || '[]');
-                history.push({ role, content });
-                sessionStorage.setItem('conversation_history', JSON.stringify(history));
-            } catch (e) {
-                console.warn('No se pudo guardar el historial en sessionStorage:', e);
-            }
-        }
-        
-        function appendMessage(sender, text) {
-            const messageContainer = document.createElement("div");
-            messageContainer.classList.add("message-container");
-            const messageDiv = document.createElement("div");
- 
-            if (sender === 'user') {
-                messageDiv.classList.add('user-message');
-                messageDiv.textContent = text;
-                saveToHistory('user', text);
-            } else if (sender === 'bot') {
-                messageDiv.classList.add('bot-message');
-                // Normalizar artefactos Markdown antes de sanitizar para evitar asteriscos sueltos
-                const preprocessed = normalizeMarkdownArtifacts(text);
-                // render allowed HTML tags (sanitized) so <strong> se vea como negrita
-                const safeHtml = sanitizeHTML(preprocessed);
-                messageDiv.innerHTML = safeHtml;
-                saveToHistory('bot', safeHtml);
-            } else { // error or other
-                messageDiv.classList.add('error-message');
-                messageDiv.textContent = text;
-            }
- 
-            messageContainer.appendChild(messageDiv);
-            // Insert before typing indicator if present
-            if (typingIndicator && typingIndicator.parentElement === chatLog) {
-                chatLog.insertBefore(messageContainer, typingIndicator);
-            } else {
-                chatLog.appendChild(messageContainer);
-            }
-            chatLog.scrollTop = chatLog.scrollHeight;
-        }
-
-        function showTyping(show = true){
-            if (!typingIndicator) return;
-            if (show){
-                typingIndicator.classList.add('active');
-                typingIndicator.setAttribute('aria-hidden','false');
-                chatLog.scrollTop = chatLog.scrollHeight;
-            } else {
-                typingIndicator.classList.remove('active');
-                typingIndicator.setAttribute('aria-hidden','true');
-            }
-        }
-
-        async function sendMessage() {
-            const message = userInput.value.trim();
-            if (!message) return;
-            appendMessage("user", message);
-            userInput.value = "";
-            userInput.focus();
-
-            showTyping(true);
-
-            try {
-                const response = await fetch("/api/chat", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ message: message })
-                });
-
-                showTyping(false);
-
-                if (!response.ok) {
-                    appendMessage("error", `Error del servidor: ${response.statusText}`);
-                    return;
-                }
-
-                const data = await response.json();
-                if (data.response) {
-                    appendMessage("bot", data.response);
-                } else if (data.error) {
-                    appendMessage("error", `Error del bot: ${data.error}`);
-                } else {
-                    appendMessage("error", "Respuesta inesperada del servidor.");
-                }
-
-            } catch (error) {
-                showTyping(false);
-                appendMessage("error", `Error de conexión: ${error.message}`);
-            }
-        }
-
-        async function resetChat() {
-            try {
-                const response = await fetch("/api/reset_chat", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" }
-                });
-
-                if (response.ok) {
-                    sessionStorage.removeItem('conversation_history');
-                    chatLog.innerHTML = '<div class="message-container"><div class="bot-message">Chat reiniciado. Envia un mensaje para empezar!</div></div>';
-                    // recreate typing indicator
-                    const typingDiv = document.createElement('div');
-                    typingDiv.id = 'typing-indicator';
-                    typingDiv.className = 'bot-message typing';
-                    typingDiv.innerHTML = '<span></span><span></span><span></span>';
-                    chatLog.appendChild(typingDiv);
-                    typingIndicator = typingDiv;
-                } else {
-                    const errorData = await response.json();
-                    appendMessage("error", `Error al reiniciar el chat: ${errorData.error || 'Error desconocido'}`);
-                }
-            } catch (err){
-                appendMessage("error", `Error al reiniciar: ${err.message}`);
-            }
-        }
-
-        async function regenerateResponse() {
-            const conversationHistory = JSON.parse(sessionStorage.getItem('conversation_history') || '[]');
-            // Find last bot entry and previous user
-            let lastBotIndex = -1;
-            for (let i = conversationHistory.length - 1; i >= 0; i--){
-                if (conversationHistory[i].role === 'bot'){ lastBotIndex = i; break; }
-            }
-            if (lastBotIndex > 0){
-                const lastUser = conversationHistory[lastBotIndex - 1];
-                if (!lastUser || lastUser.role !== 'user'){
-                    appendMessage("error", "No se encontró un mensaje de usuario previo para regenerar.");
-                    return;
-                }
-                const lastUserMessage = lastUser.content;
-                showTyping(true);
-                try {
-                    const response = await fetch("/api/regenerate", {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ message: lastUserMessage })
-                    });
-                    showTyping(false);
-                    if (response.ok) {
-                        const data = await response.json();
-                        if (data.response) {
-                            // remove last bot message from history and DOM
-                            // remove last bot message element in DOM
-                            const botEls = Array.from(chatLog.querySelectorAll('.bot-message')).filter(el => !el.classList.contains('typing'));
-                            if (botEls.length) {
-                                const lastBotEl = botEls[botEls.length -1];
-                                const parent = lastBotEl.parentElement;
-                                if (parent) parent.remove();
-                            }
-                            // update history
-                            conversationHistory.splice(lastBotIndex, 1);
-                            conversationHistory.push({ role: 'bot', content: data.response });
-                            sessionStorage.setItem('conversation_history', JSON.stringify(conversationHistory));
-                            appendMessage("bot", data.response);
-                        } else if (data.error) {
-                            appendMessage("error", `Error al regenerar: ${data.error}`);
-                        } else {
-                            appendMessage("error", "Respuesta inesperada al regenerar.");
-                        }
-                    } else {
-                        appendMessage("error", `Error del servidor al regenerar: ${response.statusText}`);
-                    }
-                } catch (error) {
-                    showTyping(false);
-                    appendMessage("error", `Error de conexión al regenerar: ${error.message}`);
-                }
-            } else {
-                appendMessage("error", "No hay respuesta del bot para regenerar.");
-            }
-        }
-
-        userInput.addEventListener("keydown", function(event) {
-            if (event.key === "Enter" && !event.shiftKey) {
-                event.preventDefault();
-                sendMessage();
-            }
-        });
-
-        window.addEventListener('load', () => {
-            userInput.focus();
-            const storedHistory = JSON.parse(sessionStorage.getItem('conversation_history') || '[]');
-            // Restore messages
-            storedHistory.forEach(msg => {
-                appendMessage(msg.role, msg.content);
-            });
-            // Ensure typing indicator exists and reference is up-to-date
-            if (!document.getElementById('typing-indicator')) {
-                const typingDiv = document.createElement('div');
-                typingDiv.id = 'typing-indicator';
-                typingDiv.className = 'bot-message typing';
-                typingDiv.innerHTML = '<span></span><span></span><span></span>';
-                chatLog.appendChild(typingDiv);
-                typingIndicator = typingDiv;
-            } else {
-                typingIndicator = document.getElementById('typing-indicator');
-            }
-        });
     </script>
 </body>
 </html>
