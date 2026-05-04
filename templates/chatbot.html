@@ -18,7 +18,6 @@
         }
 
         body { background: var(--bg-app); color: var(--text-main); font-family: 'Inter', sans-serif; overflow: hidden; }
-        
         body::before {
             content: ""; position: fixed; inset: 0; pointer-events: none; opacity: 0.04;
             background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch' /%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' /%3E%3C/svg%3E");
@@ -26,10 +25,18 @@
 
         #app-container { display: flex; height: 100vh; }
         
-        #sidebar { width: 280px; background: var(--bg-sidebar); border-right: 1px solid var(--border-color); display: flex; flex-direction: column; padding: 16px; }
+        #sidebar { width: 280px; background: var(--bg-sidebar); border-right: 1px solid var(--border-color); display: flex; flex-direction: column; padding: 16px; z-index: 10; }
         
-        .chat-item { padding: 12px; border-radius: 8px; font-size: 0.85rem; color: #a1a1aa; cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 4px; }
-        .chat-item:hover, .chat-item.active { background: rgba(255,255,255,0.05); color: #fff; }
+        /* Estilos de los items del Sidebar (Con Hover Actions) */
+        .chat-item-wrapper { display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; border-radius: 8px; margin-bottom: 4px; cursor: pointer; color: #a1a1aa; transition: background 0.2s; }
+        .chat-item-wrapper:hover, .chat-item-wrapper.active { background: rgba(255,255,255,0.08); color: #fff; }
+        .chat-item-title { flex: 1; font-size: 0.85rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding-right: 8px; }
+        
+        .chat-item-actions { display: none; gap: 6px; }
+        .chat-item-wrapper:hover .chat-item-actions { display: flex; }
+        .action-btn { background: transparent; border: none; color: #a1a1aa; cursor: pointer; padding: 2px; transition: color 0.2s; }
+        .action-btn:hover { color: #fff; }
+        .action-btn.delete:hover { color: #ef4444; } /* Rojo al borrar */
 
         #main-view { flex: 1; display: flex; flex-direction: column; position: relative; }
         #chat-box { flex: 1; overflow-y: auto; padding: 24px 0; }
@@ -61,13 +68,15 @@
             </button>
             <div class="text-xs text-zinc-500 font-bold mb-3 uppercase tracking-wider">Historial</div>
             <div id="history-list" class="flex-1 overflow-y-auto"></div>
-            <a href="/" class="mt-auto pt-4 border-t border-zinc-800 chat-item flex items-center gap-2">← Volver a Inicio</a>
+            <a href="/" class="mt-auto pt-4 border-t border-zinc-800 chat-item-wrapper flex items-center gap-2" style="justify-content: flex-start; border-radius:0;">
+                ← Volver a Inicio
+            </a>
         </aside>
 
         <!-- Main Chat -->
         <main id="main-view">
             <header class="p-4 border-b border-zinc-800 flex justify-between font-semibold tracking-wide">
-                <span>Tamachi-Diagnostic <span class="text-xs bg-zinc-800 px-2 py-1 rounded">v3.0</span></span>
+                <span>Tamachi-Diagnostic <span class="text-xs bg-zinc-800 px-2 py-1 rounded">v3.5</span></span>
             </header>
 
             <div id="chat-box"></div>
@@ -94,7 +103,43 @@
         async function loadSidebar() {
             const res = await fetch('/api/chats');
             const chats = await res.json();
-            historyList.innerHTML = chats.map(c => `<div class="chat-item ${c.chat_id === currentChatId ? 'active' : ''}" onclick="loadChat('${c.chat_id}')">${c.title}</div>`).join('');
+            
+            historyList.innerHTML = chats.map(c => `
+                <div class="chat-item-wrapper ${c.chat_id === currentChatId ? 'active' : ''}" onclick="loadChat('${c.chat_id}')">
+                    <div class="chat-item-title">${c.title}</div>
+                    <div class="chat-item-actions">
+                        <button class="action-btn" onclick="editChatTitle(event, '${c.chat_id}', '${c.title}')" title="Editar">
+                            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 20h9M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+                        </button>
+                        <button class="action-btn delete" onclick="deleteChat(event, '${c.chat_id}')" title="Borrar">
+                            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M10 11v6M14 11v6"/></svg>
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // NUEVO: Funciones para Borrar y Editar
+        async function deleteChat(event, chatId) {
+            event.stopPropagation(); // Evita que se haga clic en el chat y se cargue
+            if(confirm("¿Estás seguro de que quieres borrar este triaje?")) {
+                await fetch(`/api/chat/${chatId}`, { method: 'DELETE' });
+                if(currentChatId === chatId) { startNewChat(); } 
+                else { loadSidebar(); }
+            }
+        }
+
+        async function editChatTitle(event, chatId, currentTitle) {
+            event.stopPropagation();
+            const newTitle = prompt("Nuevo nombre para este triaje:", currentTitle);
+            if(newTitle && newTitle.trim() !== "" && newTitle !== currentTitle) {
+                await fetch(`/api/chat/${chatId}`, { 
+                    method: 'PUT', 
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ title: newTitle.trim() }) 
+                });
+                loadSidebar();
+            }
         }
 
         async function loadChat(chatId) {
@@ -153,7 +198,6 @@
 
         userInput.addEventListener('keydown', e => { if(e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); } });
         
-        // Inicializar
         startNewChat();
         loadSidebar();
     </script>
