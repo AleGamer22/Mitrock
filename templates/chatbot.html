@@ -328,6 +328,9 @@
     <script>
         const chatBox = document.getElementById('chat-box');
         const userInput = document.getElementById('user-input');
+        const sidebarHistory = document.querySelector('.sidebar-history');
+
+        let currentChatId = null;
 
         // Configurar Marked.js para usar Highlight.js
         marked.setOptions({
@@ -439,6 +442,37 @@
             return id;
         }
 
+        async function loadSidebar() {
+            try {
+                const response = await fetch('/api/chats');
+                const chats = await response.json();
+                sidebarHistory.innerHTML = '<div class="text-xs text-zinc-500 font-bold mb-2 uppercase tracking-wider">Chats</div>';
+                chats.forEach(chat => {
+                    const item = document.createElement('div');
+                    item.className = 'history-item';
+                    item.textContent = chat.title;
+                    item.onclick = () => switchChat(chat.chat_id);
+                    sidebarHistory.appendChild(item);
+                });
+            } catch (error) {
+                console.error('Error loading sidebar:', error);
+            }
+        }
+
+        async function switchChat(chatId) {
+            currentChatId = chatId;
+            chatBox.innerHTML = '';
+            try {
+                const response = await fetch(`/api/chat/${chatId}`);
+                const data = await response.json();
+                data.history.forEach(msg => {
+                    appendMessage(msg.role === 'user' ? 'user' : 'bot', msg.content);
+                });
+            } catch (error) {
+                console.error('Error switching chat:', error);
+            }
+        }
+
         async function sendMessage() {
             const message = userInput.value.trim();
             if (!message) return;
@@ -453,7 +487,7 @@
                 const response = await fetch('/api/chat', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ message: message })
+                    body: JSON.stringify({ message: message, chatId: currentChatId })
                 });
 
                 document.getElementById(typingId).remove();
@@ -461,6 +495,10 @@
                 const data = await response.json();
                 if (response.ok && data.response) {
                     appendMessage('bot', data.response);
+                    if (data.chatId && data.chatId !== currentChatId) {
+                        currentChatId = data.chatId;
+                        loadSidebar();
+                    }
                 } else {
                     appendMessage('bot', `**Error del sistema:** ${data.error || 'Fallo de conexión.'}`);
                 }
@@ -471,13 +509,10 @@
         }
 
         async function resetSession() {
-            try {
-                await fetch('/api/reset_chat', { method: 'POST' });
-                chatBox.innerHTML = '';
-                appendMessage('bot', 'Memoria purgada. Protocolo de triaje reiniciado. ¿Cuál es el problema?');
-            } catch (error) {
-                console.error('Error al resetear', error);
-            }
+            currentChatId = null;
+            chatBox.innerHTML = '';
+            appendMessage('bot', 'Nuevo triaje iniciado. ¿Cuál es el problema?');
+            loadSidebar();
         }
 
         async function regenerateResponse() {
@@ -491,7 +526,7 @@
                 const response = await fetch('/api/regenerate', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ message: lastMessage })
+                    body: JSON.stringify({ message: lastMessage, chatId: currentChatId })
                 });
 
                 document.getElementById(typingId).remove();
@@ -516,6 +551,10 @@
                 sendMessage();
             }
         });
+
+        // Inicializar
+        loadSidebar();
+        appendMessage('bot', 'Sistemas operativos de <strong>Tamachi Studios</strong> en línea.\n\nSoy la IA encargada del triaje técnico. Especialidades configuradas:\n\n- Reparación Radical (Optimización de Hardware)\n- Auditoría de Redes (DHCP, BIND9, Apache)\n- Programa Segunda Vida\n\n¿En qué puedo ayudarte hoy?');
     </script>
 </body>
 </html>

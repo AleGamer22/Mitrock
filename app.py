@@ -3,7 +3,9 @@ import requests
 import os
 import re
 from dotenv import load_dotenv
-# from pymongo import MongoClient
+from pymongo import MongoClient
+import uuid
+from datetime import datetime
 
 load_dotenv()
 
@@ -19,11 +21,14 @@ DB_NAME = "chatbot_history"
 if not GEMINI_API_KEY:
     print("Error: La variable de entorno GEMINI_API_KEY no está definida.")
 
+client = None
+db = None
+conversations = None
 if MONGO_URI:
     try:
-        # client = MongoClient(MONGO_URI)
-        # db = client[DB_NAME]
-        # conversations = db.conversations
+        client = MongoClient(MONGO_URI)
+        db = client[DB_NAME]
+        conversations = db.conversations
         print("Conexión a MongoDB Atlas establecida.")
     except Exception as e:
         print(f"Error al conectar a MongoDB: {e}")
@@ -32,27 +37,31 @@ if MONGO_URI:
 else:
     print("Advertencia: La variable de entorno MONGO_URI no está definida. La memoria persistente estará desactivada.")
 
-def get_conversation_history(user_id, use_persistence=True):
-    if use_persistence and MONGO_URI:
-        # conversation_data = conversations.find_one({"user_id": user_id})
-        # if conversation_data and "history" in conversation_data:
-        #     return conversation_data["history"]
-        # else:
-        #     return []
-        return []
+def get_conversation_history(user_id, chat_id):
+    if conversations:
+        conversation_data = conversations.find_one({"user_id": user_id, "chat_id": chat_id})
+        if conversation_data and "history" in conversation_data:
+            return conversation_data["history"]
+        else:
+            return []
     else:
-        return session.get("conversation_history", [])
+        return session.get(f"conversation_history_{chat_id}", [])
 
-def store_conversation_history(user_id, history, use_persistence=True):
-    if use_persistence and MONGO_URI:
-        # conversations.update_one(
-        #     {"user_id": user_id},
-        #     {"$set": {"history": history}},
-        #     upsert=True
-        # )
-        pass
+def store_conversation_history(user_id, chat_id, history, title=None):
+    if conversations:
+        update_data = {
+            "history": history,
+            "updated_at": datetime.utcnow()
+        }
+        if title:
+            update_data["title"] = title
+        conversations.update_one(
+            {"user_id": user_id, "chat_id": chat_id},
+            {"$set": update_data},
+            upsert=True
+        )
     else:
-        session["conversation_history"] = history
+        session[f"conversation_history_{chat_id}"] = history
         session.modified = True
 
 @app.route("/")
@@ -69,16 +78,21 @@ def chat():
         return jsonify({"error": "La API Key no está configurada en el servidor."}), 500
 
     user_message = request.json.get("message")
+    chat_id = request.json.get("chatId")
     if not user_message:
         return jsonify({"error": "Mensaje del usuario no proporcionado"}), 400
 
-    use_persistence = MONGO_URI is not None
     user_id = session.get("user_id")
     if not user_id:
         user_id = os.urandom(16).hex()
         session["user_id"] = user_id
 
-    conversation_history = get_conversation_history(user_id, use_persistence)
+    if not chat_id:
+        chat_id = str(uuid.uuid4())
+        title = user_message[:30] + "..." if len(user_message) > 30 else user_message
+        store_conversation_history(user_id, chat_id, [], title)
+
+    conversation_history = get_conversation_history(user_id, chat_id)
 
     max_history_length = 10
     if len(conversation_history) > max_history_length:
@@ -127,9 +141,9 @@ def chat():
 
         conversation_history.append({"role": "user", "content": user_message})
         conversation_history.append({"role": "assistant", "content": bot_response})
-        store_conversation_history(user_id, conversation_history, use_persistence)
+        store_conversation_history(user_id, chat_id, conversation_history)
 
-        return jsonify({"response": bot_response})
+        return jsonify({"response": bot_response, "chatId": chat_id})
 
     except requests.exceptions.RequestException as e:
         return jsonify({"error": f"Error al comunicarse con la API de Gemini: {str(e)}"}), 500
@@ -150,16 +164,16 @@ def regenerate():
         return jsonify({"error": "La API Key no está configurada en el servidor."}), 500
 
     user_message = request.json.get("message")
-    if not user_message:
-        return jsonify({"error": "Mensaje del usuario no proporcionado"}), 400
+    chat_id = request.json.get("chatId")
+    if not user_message or not chat_id:
+        return jsonify({"error": "Mensaje del usuario o chatId no proporcionado"}), 400
 
-    use_persistence = MONGO_URI is not None
     user_id = session.get("user_id")
     if not user_id:
         user_id = os.urandom(16).hex()
         session["user_id"] = user_id
 
-    conversation_history = get_conversation_history(user_id, use_persistence)
+    conversation_history = get_conversation_history(user_id, chat_id)
 
     # Encontrar el último mensaje del usuario y regenerar respuesta
     last_user_index = None
@@ -216,7 +230,7 @@ def regenerate():
         bot_response = re.sub(r'\n\s*\n', '\n', bot_response)
 
         conversation_history.append({"role": "assistant", "content": bot_response})
-        store_conversation_history(user_id, conversation_history, use_persistence)
+        store_conversation_history(user_id, chat_id, conversation_history)
 
         return jsonify({"response": bot_response})
 
@@ -224,6 +238,35 @@ def regenerate():
         return jsonify({"error": f"Error al comunicarse con la API de Gemini: {str(e)}"}), 500
     except Exception as e:
         return jsonify({"error": f"Error interno del servidor: {str(e)}"}), 500
+
+@app.route("/api/chats", methods=["GET"])
+def get_chats():
+    user_id = session.get("user_id")
+    if not user_id:
+        return jsonify([])
+    
+    if conversations:
+        chats = list(conversations.find({"user_id": user_id}, {"chat_id": 1, "title": 1, "_id": 0}).sort("updated_at", -1))
+        return jsonify(chats)
+    else:
+        return jsonify([])
+
+@app.route("/api/chat/<chat_id>", methods=["GET"])
+def get_chat(chat_id):
+    user_id = session.get("user_id")
+    if not user_id:
+        return jsonify({"error": "Usuario no identificado"}), 400
+    
+    history = get_conversation_history(user_id, chat_id)
+    return jsonify({"history": history})
+
+@app.route("/api/reset_chat", methods=["POST"])
+def reset_chat():
+    user_id = session.get("user_id")
+    chat_id = request.json.get("chatId")
+    if user_id and chat_id:
+        store_conversation_history(user_id, chat_id, [])
+    return jsonify({"status": "Chat reiniciado"})
 
 if __name__ == "__main__":
     app.run(debug=True)
