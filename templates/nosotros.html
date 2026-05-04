@@ -7,143 +7,170 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-:root {
-    --bg-base: #030303;
-    --bg-surface: #0a0a0a;
-    --bg-card: #0f0f0f;
-    --border-light: rgba(255, 255, 255, 0.08);
-    --border-hover: rgba(255, 255, 255, 0.2);
-    --text-main: #ededed;
-    --text-muted: #888888;
-    --radius: 12px;
-}
+        :root {
+            --bg-base: #030303;
+            --bg-surface: #0a0a0a;
+            --bg-card: #0f0f0f;
+            --border-light: rgba(255, 255, 255, 0.08);
+            --border-hover: rgba(255, 255, 255, 0.2);
+            --text-main: #ededed;
+            --text-muted: #888888;
+            --radius: 12px;
+        }
 
-html { scroll-behavior: smooth; }
+        html { scroll-behavior: smooth; }
 
-body {
-    background-color: var(--bg-base);
-    color: var(--text-main);
-    font-family: 'Inter', system-ui, -apple-system, sans-serif;
-    -webkit-font-smoothing: antialiased;
-    min-height: 100vh;
-    position: relative;
-}
+        body {
+            background-color: var(--bg-base);
+            color: var(--text-main);
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            -webkit-font-smoothing: antialiased;
+            min-height: 100vh;
+            position: relative;
+        }
 
-body::before {
-    content: "";
-    position: fixed;
-    inset: 0;
-    pointer-events: none;
-    opacity: 0.04;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch' /%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' /%3E%3C/svg%3E");
-    z-index: 50;
-}
+        body::before {
+            content: "";
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            opacity: 0.04;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch' /%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' /%3E%3C/svg%3E");
+            z-index: 50;
+        }
 
-.glass-nav {
-    background: rgba(3, 3, 3, 0.7);
-    backdrop-filter: blur(12px);
-    border-bottom: 1px solid var(--border-light);
-}
+        .glass-nav {
+            background: rgba(3, 3, 3, 0.7);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--border-light);
+        }
 
-.tamachi-card {
-    background-color: var(--bg-card);
-    border: 1px solid var(--border-light);
-    border-radius: var(--radius);
-    transition: transform 0.3s ease, border-color 0.3s ease;
-}
+        .btn-primary {
+            background: #ffffff;
+            color: #000000;
+            font-weight: 600;
+            padding: 10px 24px;
+            border-radius: 6px;
+            transition: transform 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            border: none;
+        }
 
-.tamachi-card:hover {
-    transform: translateY(-4px);
-    border-color: var(--border-hover);
-}
+        .btn-primary:hover {
+            transform: scale(1.02);
+            opacity: 0.9;
+        }
 
-.btn-primary {
-    background: #ffffff;
-    color: #000000;
-    font-weight: 600;
-    padding: 10px 24px;
-    border-radius: 6px;
-    transition: transform 0.2s ease;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-}
+        .brand-logo {
+            width: 36px;
+            height: 36px;
+            background: #ffffff;
+            color: #000000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 1.2rem;
+            border-radius: 6px;
+        }
 
-.btn-primary:hover {
-    transform: scale(1.02);
-}
+        /* Formulario Minimalista Premium */
+        .tamachi-input {
+            width: 100%;
+            background: transparent;
+            border: none;
+            border-bottom: 1px solid var(--border-light);
+            color: var(--text-main);
+            padding: 12px 0;
+            font-size: 1rem;
+            outline: none;
+            transition: border-color 0.3s ease;
+            border-radius: 0;
+            margin-bottom: 24px;
+        }
 
-.btn-outline {
-    background: transparent;
-    color: var(--text-main);
-    border: 1px solid var(--border-light);
-    padding: 10px 24px;
-    border-radius: 6px;
-    transition: all 0.2s ease;
-}
+        .tamachi-input:focus {
+            border-bottom-color: #ffffff;
+        }
 
-.btn-outline:hover {
-    background: rgba(255,255,255,0.05);
-    border-color: var(--text-muted);
-}
+        .tamachi-input::placeholder {
+            color: #4a4a4a;
+        }
 
-.brand-logo {
-    width: 36px;
-    height: 36px;
-    background: #ffffff;
-    color: #000000;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: 800;
-    font-size: 1.2rem;
-    border-radius: 6px;
-}
+        textarea.tamachi-input {
+            resize: none;
+        }
     </style>
 </head>
 <body class="min-h-screen">
     <!-- Navbar -->
-    <nav class="glass-nav sticky top-0 z-50 flex justify-between items-center p-6">
-        <div class="brand-logo">T</div>
-        <div class="flex space-x-6">
-            <a href="/" class="hover:text-gray-300 transition-all">Inicio</a>
-            <a href="/servicios" class="hover:text-gray-300 transition-all">Servicios</a>
-            <a href="/nosotros" class="hover:text-gray-300 transition-all">Filosofía</a>
+    <nav class="glass-nav sticky top-0 z-50 flex justify-between items-center p-6 px-12">
+        <div class="flex items-center gap-4">
+            <div class="brand-logo">T</div>
+            <span class="font-bold tracking-tight hidden md:block">Tamachi Studios S.L.</span>
         </div>
-        <a href="/ia" class="btn-primary">Tamachi-Diagnostic</a>
+        <div class="flex space-x-8 text-sm font-medium">
+            <a href="/" class="hover:text-gray-400 transition-all">Inicio</a>
+            <a href="/servicios" class="hover:text-gray-400 transition-all">Servicios</a>
+            <a href="/nosotros" class="text-white">Filosofía</a>
+        </div>
+        <a href="/ia" class="btn-primary text-sm">Tamachi-Diagnostic</a>
     </nav>
 
     <!-- Filosofía Section -->
-    <section class="py-20 px-6 animate-fade-in-up">
+    <section class="py-24 px-6">
         <div class="max-w-4xl mx-auto">
-            <h1 class="text-5xl md:text-7xl font-bold text-center mb-16">Filosofía</h1>
-            <p class="text-lg text-gray-400 mb-12 leading-relaxed">
-                Somos Tamachi Studios S.L., un Partner Tecnológico especializado en el trato directo y la resolución ultra-eficiente. Operamos desde Madrid, enfocados en PYMES que necesitan soluciones tecnológicas prácticas y sin complicaciones. Nuestra aproximación combina expertise técnico con un compromiso inquebrantable con la proximidad y la efectividad.
+            <h1 class="text-5xl md:text-7xl font-bold text-center mb-16 tracking-tighter">Filosofía</h1>
+            <p class="text-lg text-gray-400 mb-8 leading-relaxed">
+                Somos Tamachi Studios S.L., un Partner Tecnológico especializado en el trato directo y la resolución ultra-eficiente. Operamos desde <strong>Rivas-Vaciamadrid</strong>, enfocados en PYMES que necesitan soluciones tecnológicas prácticas y sin complicaciones.
             </p>
             <p class="text-lg text-gray-400 mb-12 leading-relaxed">
-                Creemos en la tecnología como herramienta para potenciar negocios, no como un fin en sí misma. Por eso, nos especializamos en infraestructuras sólidas, mantenimientos preventivos y optimizaciones que realmente impactan en la productividad y la seguridad de nuestros clientes.
+                Nuestra aproximación combina expertise técnico con un compromiso inquebrantable con la proximidad. Creemos en la <strong>Reparación Radical</strong> y la optimización de infraestructuras (redes BIND9, Apache2, hardware avanzado) como base para la productividad real.
             </p>
         </div>
     </section>
 
     <!-- Contacto Section -->
-    <section class="py-20 px-6 bg-gray-900 animate-fade-in-up">
-        <div class="max-w-4xl mx-auto">
-            <h2 class="text-4xl font-bold text-center mb-12">Contacto</h2>
-            <div class="grid md:grid-cols-2 gap-12">
+    <section class="py-24 px-6 bg-[#050505] border-y border-white/5">
+        <div class="max-w-5xl mx-auto">
+            <div class="grid md:grid-cols-2 gap-20">
                 <div>
-                    <h3 class="text-2xl font-bold mb-4">Información de Contacto</h3>
-                    <p class="text-gray-400 mb-4">Madrid, España</p>
-                    <p class="text-gray-400 mb-4">Email: info@tamachistudios.com</p>
-                    <p class="text-gray-400">Teléfono: +34 600 000 000</p>
+                    <h2 class="text-4xl font-bold mb-8 tracking-tight">Contacto</h2>
+                    <div class="space-y-6 text-gray-400">
+                        <div>
+                            <h3 class="text-white font-semibold mb-1">Ubicación</h3>
+                            <p>Rivas-Vaciamadrid, Comunidad de Madrid</p>
+                        </div>
+                        <div>
+                            <h3 class="text-white font-semibold mb-1">Email Directo</h3>
+                            <p>alenationvibes@gmail.com</p>
+                        </div>
+                        <div>
+                            <h3 class="text-white font-semibold mb-1">YouTube</h3>
+                            <p>@AleNationVibes</p>
+                        </div>
+                    </div>
                 </div>
+
+                <!-- Formulario Directo a Gmail -->
                 <div>
-                    <h3 class="text-2xl font-bold mb-4">Envíanos un Mensaje</h3>
-                    <form class="tamachi-card p-8">
-                        <input type="text" placeholder="Nombre" required>
-                        <input type="email" placeholder="Email" required>
-                        <textarea placeholder="Mensaje" rows="4" required></textarea>
-                        <button type="submit" class="btn-primary">Enviar</button>
+                    <h3 class="text-2xl font-bold mb-8">Envíanos un Mensaje</h3>
+                    <form action="https://formsubmit.co/alenationvibes@gmail.com" method="POST" class="flex flex-col">
+                        <!-- Configuración FormSubmit -->
+                        <input type="hidden" name="_subject" value="Nuevo Mensaje desde la Web Tamachi!">
+                        <input type="hidden" name="_captcha" value="false">
+                        <input type="hidden" name="_next" value="https://www.tamachi.es">
+
+                        <input type="text" name="nombre" placeholder="Nombre" class="tamachi-input" required>
+                        <input type="email" name="email" placeholder="Tu Email" class="tamachi-input" required>
+                        <textarea name="mensaje" placeholder="Describe tu necesidad técnica..." rows="4" class="tamachi-input" required></textarea>
+                        
+                        <div class="mt-4">
+                            <button type="submit" class="btn-primary w-full md:w-auto">Enviar Solicitud</button>
+                        </div>
                     </form>
                 </div>
             </div>
@@ -151,8 +178,8 @@ body::before {
     </section>
 
     <!-- Footer -->
-    <footer class="py-8 px-6 border-t border-gray-700 text-center text-gray-500">
-        <p>&copy; 2024 Tamachi Studios S.L. Todos los derechos reservados.</p>
+    <footer class="py-12 px-6 text-center text-gray-600 text-sm">
+        <p>&copy; 2026 Tamachi Studios S.L. Todos los derechos reservados.</p>
     </footer>
 </body>
 </html>
