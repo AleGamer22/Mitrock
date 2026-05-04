@@ -1,3 +1,5 @@
-Flask
+flask
+google-generativeai
 requests
 python-dotenv
+pymongo
