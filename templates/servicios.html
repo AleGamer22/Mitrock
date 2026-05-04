@@ -7,161 +7,211 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-:root {
-    --bg-base: #030303;
-    --bg-surface: #0a0a0a;
-    --bg-card: #0f0f0f;
-    --border-light: rgba(255, 255, 255, 0.08);
-    --border-hover: rgba(255, 255, 255, 0.2);
-    --text-main: #ededed;
-    --text-muted: #888888;
-    --radius: 12px;
-}
+        :root {
+            --bg-base: #030303;
+            --bg-surface: #0a0a0a;
+            --bg-card: #0f0f0f;
+            --border-light: rgba(255, 255, 255, 0.08);
+            --border-hover: rgba(255, 255, 255, 0.2);
+            --text-main: #ededed;
+            --text-muted: #888888;
+            --radius: 12px;
+        }
 
-html { scroll-behavior: smooth; }
+        html { scroll-behavior: smooth; }
 
-body {
-    background-color: var(--bg-base);
-    color: var(--text-main);
-    font-family: 'Inter', system-ui, -apple-system, sans-serif;
-    -webkit-font-smoothing: antialiased;
-    min-height: 100vh;
-    position: relative;
-}
+        body {
+            background-color: var(--bg-base);
+            color: var(--text-main);
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            -webkit-font-smoothing: antialiased;
+            min-height: 100vh;
+            position: relative;
+        }
 
-body::before {
-    content: "";
-    position: fixed;
-    inset: 0;
-    pointer-events: none;
-    opacity: 0.04;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch' /%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' /%3E%3C/svg%3E");
-    z-index: 50;
-}
+        /* Efecto Noise Grain */
+        body::before {
+            content: "";
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            opacity: 0.04;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch' /%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' /%3E%3C/svg%3E");
+            z-index: 50;
+        }
 
-.glass-nav {
-    background: rgba(3, 3, 3, 0.7);
-    backdrop-filter: blur(12px);
-    border-bottom: 1px solid var(--border-light);
-}
+        .glass-nav {
+            background: rgba(3, 3, 3, 0.75);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--border-light);
+        }
 
-.tamachi-card {
-    background-color: var(--bg-card);
-    border: 1px solid var(--border-light);
-    border-radius: var(--radius);
-    transition: transform 0.3s ease, border-color 0.3s ease;
-}
+        .tamachi-card {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-light);
+            border-radius: var(--radius);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
 
-.tamachi-card:hover {
-    transform: translateY(-4px);
-    border-color: var(--border-hover);
-}
+        .tamachi-card:hover {
+            transform: translateY(-4px);
+            border-color: var(--border-hover);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+        }
 
-.btn-primary {
-    background: #ffffff;
-    color: #000000;
-    font-weight: 600;
-    padding: 10px 24px;
-    border-radius: 6px;
-    transition: transform 0.2s ease;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-}
+        .btn-primary {
+            background: #ffffff;
+            color: #000000;
+            font-weight: 600;
+            padding: 10px 24px;
+            border-radius: 6px;
+            transition: transform 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
 
-.btn-primary:hover {
-    transform: scale(1.02);
-}
+        .btn-primary:hover {
+            transform: scale(1.02);
+        }
 
-.btn-outline {
-    background: transparent;
-    color: var(--text-main);
-    border: 1px solid var(--border-light);
-    padding: 10px 24px;
-    border-radius: 6px;
-    transition: all 0.2s ease;
-}
+        .brand-logo {
+            width: 36px;
+            height: 36px;
+            background: #ffffff;
+            color: #000000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 1.2rem;
+            border-radius: 6px;
+        }
 
-.btn-outline:hover {
-    background: rgba(255,255,255,0.05);
-    border-color: var(--text-muted);
-}
+        .section-divider {
+            height: 1px;
+            background: linear-gradient(to right, transparent, var(--border-light), transparent);
+            margin: 4rem 0;
+        }
 
-.brand-logo {
-    width: 36px;
-    height: 36px;
-    background: #ffffff;
-    color: #000000;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: 800;
-    font-size: 1.2rem;
-    border-radius: 6px;
-}
+        .gradient-title {
+            background: linear-gradient(to bottom, #fff 0%, #666 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
     </style>
 </head>
-<body class="min-h-screen">
+<body class="min-h-screen selection:bg-white selection:text-black">
     <!-- Navbar -->
-    <nav class="glass-nav sticky top-0 z-50 flex justify-between items-center p-6">
-        <div class="brand-logo">T</div>
-        <div class="flex space-x-6">
-            <a href="/" class="hover:text-gray-300 transition-all">Inicio</a>
-            <a href="/servicios" class="hover:text-gray-300 transition-all">Servicios</a>
-            <a href="/nosotros" class="hover:text-gray-300 transition-all">Filosofía</a>
+    <nav class="glass-nav sticky top-0 z-50 flex justify-between items-center p-6 px-12">
+        <div class="flex items-center gap-4">
+            <div class="brand-logo">T</div>
+            <span class="font-bold tracking-tight hidden md:block">Tamachi Studios S.L.</span>
         </div>
-        <a href="/ia" class="btn-primary">Tamachi-Diagnostic</a>
+        <div class="flex space-x-8 text-sm font-medium">
+            <a href="/" class="hover:text-gray-400 transition-all">Inicio</a>
+            <a href="/servicios" class="text-white">Servicios</a>
+            <a href="/nosotros" class="hover:text-gray-400 transition-all">Filosofía</a>
+        </div>
+        <a href="/ia" class="btn-primary text-sm">Tamachi-Diagnostic</a>
     </nav>
 
+    <!-- Header Sección -->
+    <header class="py-24 px-6 text-center">
+        <h1 class="text-6xl md:text-8xl font-bold tracking-tighter gradient-title mb-6">Capacidades</h1>
+        <p class="text-gray-500 text-lg max-w-2xl mx-auto">Infraestructura de alto rendimiento y soluciones de vanguardia para la era digital.</p>
+    </header>
+
     <!-- Servicios Section -->
-    <section class="py-20 px-6 animate-fade-in-up">
+    <section class="pb-24 px-6">
         <div class="max-w-6xl mx-auto">
-            <h1 class="text-5xl md:text-7xl font-bold text-center mb-16">Servicios</h1>
 
             <!-- Sistemas y Redes -->
-            <div class="mb-20 animate-fade-in-up">
-                <h2 class="text-4xl font-bold mb-8">Sistemas y Redes</h2>
-                <p class="text-lg text-gray-400 mb-8">Especialistas en auditoría y despliegue. Configuración de servidores Linux (Ubuntu, Apache2), servicios DNS (BIND9), DHCP y FTP corporativo.</p>
-                <div class="grid md:grid-cols-2 gap-8">
+            <div id="redes" class="mb-32">
+                <div class="flex items-center gap-4 mb-8">
+                    <span class="text-xs font-mono text-zinc-600 border border-zinc-800 px-3 py-1 rounded-full">01</span>
+                    <h2 class="text-4xl font-bold tracking-tight">Sistemas y Redes</h2>
+                </div>
+                <p class="text-lg text-gray-400 mb-12 max-w-3xl leading-relaxed">Arquitecturas sólidas basadas en entornos Linux. Especialistas en auditoría, despliegue y hardening de servicios críticos para la continuidad de negocio.</p>
+                <div class="grid md:grid-cols-2 gap-6">
                     <div class="tamachi-card p-8">
-                        <h3 class="text-2xl font-bold mb-4">Auditoría de Redes</h3>
-                        <p class="text-gray-400">Evaluación completa de su infraestructura de red para identificar vulnerabilidades y optimizaciones.</p>
+                        <div class="text-white mb-4"><svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div>
+                        <h3 class="text-xl font-bold mb-3">Auditoría y Hardening</h3>
+                        <p class="text-zinc-500 text-sm leading-relaxed">Evaluación de vulnerabilidades y refuerzo de servicios DNS (BIND9), DHCP y Apache2 para blindar su red corporativa.</p>
                     </div>
                     <div class="tamachi-card p-8">
-                        <h3 class="text-2xl font-bold mb-4">Despliegue de Servidores</h3>
-                        <p class="text-gray-400">Instalación y configuración de servidores Linux con servicios esenciales para su negocio.</p>
+                        <div class="text-white mb-4"><svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M5 12h14M5 12l4-4m-4 4l4 4"/></svg></div>
+                        <h3 class="text-xl font-bold mb-3">Despliegue de Servidores</h3>
+                        <p class="text-zinc-500 text-sm leading-relaxed">Implementación de servidores Ubuntu Server optimizados para alojamiento de servicios internos y transferencia de datos segura (FTP/VSFTPD).</p>
                     </div>
                 </div>
             </div>
+
+            <div class="section-divider"></div>
 
             <!-- Reparación Radical -->
-            <div class="mb-20 animate-fade-in-up">
-                <h2 class="text-4xl font-bold mb-8">Reparación Radical</h2>
-                <p class="text-lg text-gray-400 mb-8">No tires tu equipo. Lo llevamos al límite. Actualizaciones a discos NVMe/SSD, mantenimiento térmico de CPU/GPU y ampliación de memoria.</p>
-                <div class="grid md:grid-cols-2 gap-8">
+            <div id="hardware" class="mb-32">
+                <div class="flex items-center gap-4 mb-8">
+                    <span class="text-xs font-mono text-zinc-600 border border-zinc-800 px-3 py-1 rounded-full">02</span>
+                    <h2 class="text-4xl font-bold tracking-tight">Reparación Radical</h2>
+                </div>
+                <p class="text-lg text-gray-400 mb-12 max-w-3xl leading-relaxed">No sustituimos, evolucionamos. Aplicamos ingeniería de hardware para extender la vida útil de sus estaciones de trabajo llevándolas más allá de sus especificaciones de fábrica.</p>
+                <div class="grid md:grid-cols-2 gap-6">
                     <div class="tamachi-card p-8">
-                        <h3 class="text-2xl font-bold mb-4">Actualizaciones de Hardware</h3>
-                        <p class="text-gray-400">Mejora el rendimiento de tus equipos con componentes de última generación.</p>
+                        <div class="text-white mb-4"><svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg></div>
+                        <h3 class="text-xl font-bold mb-3">Optimización de Hardware</h3>
+                        <p class="text-zinc-500 text-sm leading-relaxed">Actualización masiva a almacenamiento NVMe/SSD, recalibración de flujo térmico y ampliación de memoria RAM para flujos de trabajo pesados.</p>
                     </div>
                     <div class="tamachi-card p-8">
-                        <h3 class="text-2xl font-bold mb-4">Mantenimiento Extremo</h3>
-                        <p class="text-gray-400">Limpieza profunda, optimización térmica y calibración para máxima durabilidad.</p>
+                        <div class="text-white mb-4"><svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg></div>
+                        <h3 class="text-xl font-bold mb-3">Mantenimiento Extremo</h3>
+                        <p class="text-zinc-500 text-sm leading-relaxed">Limpieza por ultrasonidos, sustitución de compuestos térmicos de alto rendimiento y optimización de curvas de ventilación.</p>
                     </div>
                 </div>
             </div>
 
-            <!-- Programa Segunda Vida -->
-            <div class="animate-fade-in-up">
-                <h2 class="text-4xl font-bold mb-8">Programa Segunda Vida</h2>
-                <p class="text-lg text-gray-400 mb-8">Economía circular. Reacondicionamiento de equipos empresariales y reducción de la brecha digital.</p>
-                <div class="grid md:grid-cols-2 gap-8">
+            <div class="section-divider"></div>
+
+            <!-- Desarrollo Web & Branding -->
+            <div id="web" class="mb-32">
+                <div class="flex items-center gap-4 mb-8">
+                    <span class="text-xs font-mono text-zinc-600 border border-zinc-800 px-3 py-1 rounded-full">03</span>
+                    <h2 class="text-4xl font-bold tracking-tight">Identidad Digital</h2>
+                </div>
+                <p class="text-lg text-gray-400 mb-12 max-w-3xl leading-relaxed">La infraestructura no sirve sin una presencia sólida. Diseñamos ventanas digitales minimalistas que reflejan la seriedad y eficiencia de su negocio.</p>
+                <div class="grid md:grid-cols-2 gap-6">
                     <div class="tamachi-card p-8">
-                        <h3 class="text-2xl font-bold mb-4">Reacondicionamiento</h3>
-                        <p class="text-gray-400">Restauración completa de equipos usados para darles una nueva vida útil.</p>
+                        <div class="text-white mb-4"><svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/></svg></div>
+                        <h3 class="text-xl font-bold mb-3">Desarrollo Web Minimalista</h3>
+                        <p class="text-zinc-500 text-sm leading-relaxed">Creación de portafolios y webs corporativas optimizadas para velocidad, con estética monocromática y diseño adaptativo.</p>
                     </div>
                     <div class="tamachi-card p-8">
-                        <h3 class="text-2xl font-bold mb-4">Reducción de Brecha Digital</h3>
-                        <p class="text-gray-400">Acceso a tecnología asequible para empresas que no pueden invertir en equipos nuevos.</p>
+                        <div class="text-white mb-4"><svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg></div>
+                        <h3 class="text-xl font-bold mb-3">Edición & Contenido</h3>
+                        <p class="text-zinc-500 text-sm leading-relaxed">Edición de vídeo corporativo y creación de contenido visual de alto impacto alineado con el ADN de su marca.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section-divider"></div>
+
+            <!-- Programa Segunda Vida -->
+            <div id="circular" class="mb-20">
+                <div class="flex items-center gap-4 mb-8">
+                    <span class="text-xs font-mono text-zinc-600 border border-zinc-800 px-3 py-1 rounded-full">04</span>
+                    <h2 class="text-4xl font-bold tracking-tight">Programa Segunda Vida</h2>
+                </div>
+                <p class="text-lg text-gray-400 mb-12 max-w-3xl leading-relaxed">Economía circular aplicada al sector tecnológico. Reacondicionamos equipos para reducir la huella de carbono IT y cerrar la brecha digital.</p>
+                <div class="grid md:grid-cols-2 gap-6">
+                    <div class="tamachi-card p-8">
+                        <div class="text-white mb-4"><svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg></div>
+                        <h3 class="text-xl font-bold mb-3">Reacondicionamiento</h3>
+                        <p class="text-zinc-500 text-sm leading-relaxed">Restauración estructural y técnica de equipos retirados para su reincorporación en entornos productivos.</p>
+                    </div>
+                    <div class="tamachi-card p-8">
+                        <div class="text-white mb-4"><svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.407 2.67 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.407-2.67-1M12 16V7"/></svg></div>
+                        <h3 class="text-xl font-bold mb-3">Sostenibilidad IT</h3>
+                        <p class="text-zinc-500 text-sm leading-relaxed">Asesoría en gestión de residuos electrónicos y aprovechamiento de activos de hardware obsoletos.</p>
                     </div>
                 </div>
             </div>
@@ -169,8 +219,8 @@ body::before {
     </section>
 
     <!-- Footer -->
-    <footer class="py-8 px-6 border-t border-gray-700 text-center text-gray-500">
-        <p>&copy; 2024 Tamachi Studios S.L. Todos los derechos reservados.</p>
+    <footer class="py-12 px-6 border-t border-zinc-900 text-center text-gray-500 text-sm">
+        <p>&copy; 2026 Tamachi Studios S.L. Rivas-Vaciamadrid. Todos los derechos reservados.</p>
     </footer>
 </body>
 </html>
