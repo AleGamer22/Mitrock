@@ -7,64 +7,110 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        :root {
-            --bg-primary: #050505;
-            --text-primary: #ffffff;
-            --text-secondary: #cccccc;
-            --border: #333333;
-        }
-        body {
-            background-color: var(--bg-primary);
-            color: var(--text-primary);
-            font-family: 'Inter', system-ui, sans-serif;
-        }
-        body::before {
-            content: '';
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
-            opacity: 0.03;
-            z-index: -1;
-        }
-        @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(30px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-        .animate-fade-in-up {
-            animation: fadeInUp 0.8s ease-out;
-        }
-        .transition-all {
-            transition: all 0.3s ease;
-        }
-        nav a:hover {
-            color: var(--text-secondary);
-        }
-        .service-card:hover {
-            border-color: var(--text-secondary);
-            transform: translateY(-5px);
-        }
+:root {
+    --bg-base: #030303;
+    --bg-surface: #0a0a0a;
+    --bg-card: #0f0f0f;
+    --border-light: rgba(255, 255, 255, 0.08);
+    --border-hover: rgba(255, 255, 255, 0.2);
+    --text-main: #ededed;
+    --text-muted: #888888;
+    --radius: 12px;
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+    background-color: var(--bg-base);
+    color: var(--text-main);
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    min-height: 100vh;
+    position: relative;
+}
+
+body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0.04;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch' /%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' /%3E%3C/svg%3E");
+    z-index: 50;
+}
+
+.glass-nav {
+    background: rgba(3, 3, 3, 0.7);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border-light);
+}
+
+.tamachi-card {
+    background-color: var(--bg-card);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius);
+    transition: transform 0.3s ease, border-color 0.3s ease;
+}
+
+.tamachi-card:hover {
+    transform: translateY(-4px);
+    border-color: var(--border-hover);
+}
+
+.btn-primary {
+    background: #ffffff;
+    color: #000000;
+    font-weight: 600;
+    padding: 10px 24px;
+    border-radius: 6px;
+    transition: transform 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn-primary:hover {
+    transform: scale(1.02);
+}
+
+.btn-outline {
+    background: transparent;
+    color: var(--text-main);
+    border: 1px solid var(--border-light);
+    padding: 10px 24px;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+}
+
+.btn-outline:hover {
+    background: rgba(255,255,255,0.05);
+    border-color: var(--text-muted);
+}
+
+.brand-logo {
+    width: 36px;
+    height: 36px;
+    background: #ffffff;
+    color: #000000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    font-size: 1.2rem;
+    border-radius: 6px;
+}
     </style>
 </head>
 <body class="min-h-screen">
     <!-- Navbar -->
-    <nav class="flex justify-between items-center p-6 border-b border-gray-700 transition-all">
-        <div class="text-2xl font-bold">T</div>
+    <nav class="glass-nav sticky top-0 z-50 flex justify-between items-center p-6">
+        <div class="brand-logo">T</div>
         <div class="flex space-x-6">
             <a href="/" class="hover:text-gray-300 transition-all">Inicio</a>
             <a href="/servicios" class="hover:text-gray-300 transition-all">Servicios</a>
             <a href="/nosotros" class="hover:text-gray-300 transition-all">Filosofía</a>
         </div>
-        <a href="/ia" class="bg-white text-black px-4 py-2 rounded hover:bg-gray-200 transition-all">Tamachi-Diagnostic</a>
+        <a href="/ia" class="btn-primary">Tamachi-Diagnostic</a>
     </nav>
 
     <!-- Servicios Section -->
@@ -77,11 +123,11 @@
                 <h2 class="text-4xl font-bold mb-8">Sistemas y Redes</h2>
                 <p class="text-lg text-gray-400 mb-8">Especialistas en auditoría y despliegue. Configuración de servidores Linux (Ubuntu, Apache2), servicios DNS (BIND9), DHCP y FTP corporativo.</p>
                 <div class="grid md:grid-cols-2 gap-8">
-                    <div class="p-8 border border-gray-700 transition-all service-card">
+                    <div class="tamachi-card p-8">
                         <h3 class="text-2xl font-bold mb-4">Auditoría de Redes</h3>
                         <p class="text-gray-400">Evaluación completa de su infraestructura de red para identificar vulnerabilidades y optimizaciones.</p>
                     </div>
-                    <div class="p-8 border border-gray-700 transition-all service-card">
+                    <div class="tamachi-card p-8">
                         <h3 class="text-2xl font-bold mb-4">Despliegue de Servidores</h3>
                         <p class="text-gray-400">Instalación y configuración de servidores Linux con servicios esenciales para su negocio.</p>
                     </div>
@@ -93,11 +139,11 @@
                 <h2 class="text-4xl font-bold mb-8">Reparación Radical</h2>
                 <p class="text-lg text-gray-400 mb-8">No tires tu equipo. Lo llevamos al límite. Actualizaciones a discos NVMe/SSD, mantenimiento térmico de CPU/GPU y ampliación de memoria.</p>
                 <div class="grid md:grid-cols-2 gap-8">
-                    <div class="p-8 border border-gray-700 transition-all service-card">
+                    <div class="tamachi-card p-8">
                         <h3 class="text-2xl font-bold mb-4">Actualizaciones de Hardware</h3>
                         <p class="text-gray-400">Mejora el rendimiento de tus equipos con componentes de última generación.</p>
                     </div>
-                    <div class="p-8 border border-gray-700 transition-all service-card">
+                    <div class="tamachi-card p-8">
                         <h3 class="text-2xl font-bold mb-4">Mantenimiento Extremo</h3>
                         <p class="text-gray-400">Limpieza profunda, optimización térmica y calibración para máxima durabilidad.</p>
                     </div>
@@ -109,11 +155,11 @@
                 <h2 class="text-4xl font-bold mb-8">Programa Segunda Vida</h2>
                 <p class="text-lg text-gray-400 mb-8">Economía circular. Reacondicionamiento de equipos empresariales y reducción de la brecha digital.</p>
                 <div class="grid md:grid-cols-2 gap-8">
-                    <div class="p-8 border border-gray-700 transition-all service-card">
+                    <div class="tamachi-card p-8">
                         <h3 class="text-2xl font-bold mb-4">Reacondicionamiento</h3>
                         <p class="text-gray-400">Restauración completa de equipos usados para darles una nueva vida útil.</p>
                     </div>
-                    <div class="p-8 border border-gray-700 transition-all service-card">
+                    <div class="tamachi-card p-8">
                         <h3 class="text-2xl font-bold mb-4">Reducción de Brecha Digital</h3>
                         <p class="text-gray-400">Acceso a tecnología asequible para empresas que no pueden invertir en equipos nuevos.</p>
                     </div>
