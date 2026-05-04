@@ -8,8 +8,15 @@
   ],
   "routes": [
     {
-      "src": "/(.*)",
+      "src": "^/ia(?:/.*)?$",
       "dest": "chatbot.py"
+    },
+    {
+      "handle": "filesystem"
+    },
+    {
+      "src": "^/(.*)$",
+      "dest": "/public/index.html"
     }
   ]
 }

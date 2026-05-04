@@ -54,8 +54,22 @@ def store_conversation_history(user_id, history, use_persistence=True):
         session.modified = True
 
 @app.route("/")
+@app.route("/ia")
+@app.route("/ia/")
 def index():
     return render_template("chatbot.html")
+
+@app.route("/ia/api/chat", methods=["POST"])
+def chat_ia():
+    return chat()
+
+@app.route("/ia/api/reset_chat", methods=["POST"])
+def reset_chat_ia():
+    return reset_chat()
+
+@app.route("/ia/api/regenerate", methods=["POST"])
+def regenerate_ia():
+    return regenerate()
 
 @app.route("/api/chat", methods=["POST"])
 def chat():
