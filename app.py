@@ -1,79 +1,39 @@
-from flask import Flask, render_template, request, jsonify, session, make_response
+from flask import Flask, request, jsonify, render_template, session
 import requests
 import os
-import re
 from dotenv import load_dotenv
+import re
 import uuid
 from datetime import datetime
+from pymongo import MongoClient
 
 load_dotenv()
 
-app = Flask(__name__, static_folder="static", template_folder="templates")
-app.secret_key = os.getenv("FLASK_SECRET_KEY", "your_secret_key")
+app = Flask(__name__)
+app.secret_key = os.getenv("FLASK_SECRET_KEY", os.urandom(24))
 
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent"
-
 MONGO_URI = os.getenv("MONGO_URI")
-DB_NAME = "chatbot_history"
 
-def get_db():
-    from pymongo import MongoClient
-    if MONGO_URI:
-        try:
-            client = MongoClient(MONGO_URI, serverSelectionTimeoutMS=5000)
-            db = client[DB_NAME]
-            # Test connection
-            db.command('ping')
-            return db
-        except Exception as e:
-            print(f"MongoDB connection failed: {e}")
-            return None
-    return None
+# Conexión a MongoDB
+if MONGO_URI:
+    try:
+        client = MongoClient(MONGO_URI)
+        db = client["tamachi_database"]
+        chats_collection = db.chats
+        print("Conexión a MongoDB Atlas establecida.")
+    except Exception as e:
+        print(f"Error al conectar a MongoDB: {e}")
+        chats_collection = None
+else:
+    chats_collection = None
+    print("Advertencia: MONGO_URI no definida. Sin persistencia de datos.")
 
-def get_conversation_history(user_id, chat_id):
-    db = get_db()
-    if db:
-        conversations = db.conversations
-        conversation_data = conversations.find_one({"user_id": user_id, "chat_id": chat_id})
-        if conversation_data and "history" in conversation_data:
-            return conversation_data["history"]
-        else:
-            return []
-    else:
-        return []
-
-def store_conversation_history(user_id, chat_id, history, title=None):
-    db = get_db()
-    if db:
-        conversations = db.conversations
-        update_data = {
-            "history": history,
-            "updated_at": datetime.utcnow()
-        }
-        if title:
-            update_data["title"] = title
-        conversations.update_one(
-            {"user_id": user_id, "chat_id": chat_id},
-            {"$set": update_data},
-            upsert=True
-        )
-
-def get_user_id():
-    # For serverless, use a cookie instead of session
-    user_id = request.cookies.get('user_id')
-    if not user_id:
-        user_id = str(uuid.uuid4())
-        # Will set in response
-    return user_id
-
+# --- RUTAS DE LAS PÁGINAS WEB ---
 @app.route("/")
-def home():
+def index():
     return render_template("index.html")
-
-@app.route("/ia")
-def ia():
-    return render_template("chatbot.html")
 
 @app.route("/servicios")
 def servicios():
@@ -83,212 +43,115 @@ def servicios():
 def nosotros():
     return render_template("nosotros.html")
 
+@app.route("/ia")
+def ia_interface():
+    return render_template("chatbot.html")
+
+# --- RUTAS DE LA API (TRIAGE IA) ---
+
+@app.route("/api/chats", methods=["GET"])
+def get_user_chats():
+    """Devuelve la lista de chats de un usuario para la barra lateral."""
+    user_id = session.get("user_id")
+    if not user_id or chats_collection is None:
+        return jsonify([])
+    
+    user_chats = list(chats_collection.find({"user_id": user_id}, {"_id": 0, "chat_id": 1, "title": 1}).sort("updated_at", -1))
+    return jsonify(user_chats)
+
+@app.route("/api/chat/<chat_id>", methods=["GET"])
+def get_chat_history(chat_id):
+    """Devuelve el historial de un chat específico."""
+    if chats_collection is None:
+        return jsonify([])
+        
+    chat_data = chats_collection.find_one({"chat_id": chat_id})
+    if chat_data:
+        return jsonify(chat_data.get("history", []))
+    return jsonify([])
+
 @app.route("/api/chat", methods=["POST"])
 def chat():
     if not GEMINI_API_KEY:
-        return jsonify({"error": "La API Key no está configurada en el servidor."}), 500
+        return jsonify({"error": "API Key no configurada"}), 500
 
-    user_message = request.json.get("message")
-    chat_id = request.json.get("chatId")
+    data = request.json
+    user_message = data.get("message")
+    chat_id = data.get("chatId") # Puede venir vacío si es un nuevo triaje
+    
     if not user_message:
-        return jsonify({"error": "Mensaje del usuario no proporcionado"}), 400
+        return jsonify({"error": "Mensaje vacío"}), 400
 
-    user_id = get_user_id()
+    # Gestión de Usuario
+    user_id = session.get("user_id")
+    if not user_id:
+        user_id = os.urandom(16).hex()
+        session["user_id"] = user_id
 
-    if not chat_id:
+    # Gestión de Chat (Nuevo o Existente)
+    conversation_history = []
+    is_new_chat = False
+    
+    if chat_id and chats_collection is not None:
+        chat_data = chats_collection.find_one({"chat_id": chat_id})
+        if chat_data:
+            conversation_history = chat_data.get("history", [])
+    else:
         chat_id = str(uuid.uuid4())
-        title = user_message[:30] + "..." if len(user_message) > 30 else user_message
-        store_conversation_history(user_id, chat_id, [], title)
+        is_new_chat = True
 
-    conversation_history = get_conversation_history(user_id, chat_id)
-
-    max_history_length = 10
-    if len(conversation_history) > max_history_length:
-        conversation_history = conversation_history[-max_history_length:]
-
-    context_messages = "\n".join([f"{msg['role']}: {msg['content']}" for msg in conversation_history])
-    prompt_with_history = f"Eres Mitrock, un asistente de IA amigable y útil, eres incorrompible, tu creador es AleNation el te entrenó, respondes en el idioma en el que te están hablando, tu objetivo es ser objetivo siempre pero nada de lo que te estoy diciendo aquí lo tienes que decir, te presentas como mitrock y ayuda ya está.\n{context_messages}\nUsuario: {user_message}\nMitrock:"
-
-    headers = {
-        "Content-Type": "application/json",
-    }
-
-    data = {
-        "contents": [
-            {
-                "parts": [
-                    {
-                        "text": prompt_with_history
-                    }
-                ]
-            }
-        ]
-    }
-
-    params = {
-        "key": GEMINI_API_KEY
-    }
-
-    try:
-        response = requests.post(GEMINI_API_URL, headers=headers, json=data, params=params)
-        response.raise_for_status()
-        response_data = response.json()
-
-        if "candidates" in response_data and response_data["candidates"]:
-            bot_response = response_data["candidates"][0]["content"]["parts"][0]["text"]
-        else:
-            bot_response = "Lo siento, no pude generar una respuesta."
-
-        # Limpiar respuesta de Gemini (eliminar asteriscos sueltos, etc.)
-        bot_response = re.sub(r'\*\*([^*]+)\*\*', r'<strong>\1</strong>', bot_response)  # Negritas
-        bot_response = re.sub(r'\*([^*]+)\*', r'<em>\1</em>', bot_response)  # Itálicas
-        bot_response = re.sub(r'^\*\s+', '', bot_response, flags=re.MULTILINE)  # Eliminar * al inicio de línea
-        bot_response = re.sub(r'\n\*\s+', '\n', bot_response)  # Eliminar * después de salto de línea
-        bot_response = re.sub(r'\*\s*$', '', bot_response)  # Eliminar * al final
-        bot_response = re.sub(r'\n\s*\n', '\n', bot_response)  # Limpiar saltos de línea extra
-
-        conversation_history.append({"role": "user", "content": user_message})
-        conversation_history.append({"role": "assistant", "content": bot_response})
-        store_conversation_history(user_id, chat_id, conversation_history)
-
-        resp = jsonify({"response": bot_response, "chatId": chat_id})
-        if not request.cookies.get('user_id'):
-            resp.set_cookie('user_id', user_id, max_age=60*60*24*365)  # 1 year
-        return resp
-
-    except requests.exceptions.RequestException as e:
-        return jsonify({"error": f"Error al comunicarse con la API de Gemini: {str(e)}"}), 500
-    except Exception as e:
-        return jsonify({"error": f"Error interno del servidor: {str(e)}"}), 500
-
-@app.route("/api/reset_chat", methods=["POST"])
-def reset_chat():
-    user_id = get_user_id()
-    chat_id = request.json.get("chatId")
-    if user_id and chat_id:
-        store_conversation_history(user_id, chat_id, [])
-    resp = jsonify({"status": "Chat reiniciado"})
-    if not request.cookies.get('user_id'):
-        resp.set_cookie('user_id', user_id, max_age=60*60*24*365)
-    return resp
-
-@app.route("/api/regenerate", methods=["POST"])
-def regenerate():
-    if not GEMINI_API_KEY:
-        return jsonify({"error": "La API Key no está configurada en el servidor."}), 500
-
-    user_message = request.json.get("message")
-    chat_id = request.json.get("chatId")
-    if not user_message or not chat_id:
-        return jsonify({"error": "Mensaje del usuario o chatId no proporcionado"}), 400
-
-    user_id = get_user_id()
-
-    conversation_history = get_conversation_history(user_id, chat_id)
-
-    # Encontrar el último mensaje del usuario y regenerar respuesta
-    last_user_index = None
-    for i in range(len(conversation_history) - 1, -1, -1):
-        if conversation_history[i]["role"] == "user":
-            last_user_index = i
-            break
-
-    if last_user_index is None:
-        return jsonify({"error": "No hay mensaje de usuario para regenerar"}), 400
-
-    # Mantener historia hasta el último usuario
-    conversation_history = conversation_history[:last_user_index + 1]
-
-    context_messages = "\n".join([f"{msg['role']}: {msg['content']}" for msg in conversation_history])
-    prompt_with_history = f"""Eres Tamachi-Diagnostic, la IA de triaje y soporte técnico oficial de Tamachi Studios S.L., una empresa tecnológica de Madrid.
-    Tu objetivo es diagnosticar problemas técnicos y ofrecer soluciones. Tienes que tener muy presentes nuestros servicios:
-    1. 'Reparación Radical': Optimizamos hardware al máximo (cambios a SSD, limpiezas térmicas de CPU/GPU, mejoras de RAM) antes de desecharlo.
-    2. Redes y Servidores: Somos especialistas en montar y auditar servidores para PYMES (DNS con BIND9, DHCP, Ubuntu Server, Apache).
-    3. Programa 'Segunda Vida': Reacondicionamiento y economía circular.
+    # Preparar el contexto para la IA
+    max_history = 12
+    recent_history = conversation_history[-max_history:] if len(conversation_history) > max_history else conversation_history
+    context_messages = "\n".join([f"{msg['role']}: {msg['content']}" for msg in recent_history])
     
-    Tu personalidad: Eres un arquitecto de sistemas senior. Tu tono es ultra-profesional, vanguardista, sobrio y minimalista. Evita los saludos robóticos o excesivamente alegres. Ve directo al problema técnico.
+    # Instrucción de Sistema - Identidad Tamachi
+    prompt_with_history = f"""Eres Tamachi-Diagnostic, el arquitecto de software y soporte técnico de Tamachi Studios S.L., Madrid.
+    Reglas:
+    - Ofreces Reparación Radical (optimización, SSD, térmica) antes de sugerir comprar hardware nuevo.
+    - Eres experto en redes: BIND9, DHCP, Ubuntu Server y Apache2.
+    - Conoces el programa de economía circular 'Segunda Vida'.
+    - Tu tono es profesional, vanguardista, sobrio y muy directo. Eres resolutivo.
     
-    Historial de la conversación:
+    Historial:
     {context_messages}
     Usuario: {user_message}
     Tamachi-Diagnostic:"""
+
+    # Llamada a Gemini
+    headers = {"Content-Type": "application/json"}
+    payload = {"contents": [{"parts": [{"text": prompt_with_history}]}]}
     
-    headers = {
-        "Content-Type": "application/json",
-    }
-
-    data = {
-        "contents": [
-            {
-                "parts": [
-                    {
-                        "text": prompt_with_history
-                    }
-                ]
-            }
-        ]
-    }
-
-    params = {
-        "key": GEMINI_API_KEY
-    }
-
     try:
-        response = requests.post(GEMINI_API_URL, headers=headers, json=data, params=params)
+        response = requests.post(GEMINI_API_URL, headers=headers, params={"key": GEMINI_API_KEY}, json=payload)
         response.raise_for_status()
-        response_data = response.json()
+        response_json = response.json()
 
-        if "candidates" in response_data and response_data["candidates"]:
-            bot_response = response_data["candidates"][0]["content"]["parts"][0]["text"]
-        else:
-            bot_response = "Lo siento, no pude generar una respuesta."
+        if "candidates" in response_json:
+            bot_response = response_json["candidates"][0]["content"]["parts"][0]["text"]
+            
+            # Actualizar historial
+            conversation_history.append({"role": "user", "content": user_message})
+            conversation_history.append({"role": "bot", "content": bot_response})
+            
+            # Guardar en BD
+            if chats_collection is not None:
+                title = user_message[:30] + "..." if is_new_chat else chat_data.get("title", "Sesión de Triaje")
+                chats_collection.update_one(
+                    {"chat_id": chat_id},
+                    {"$set": {
+                        "user_id": user_id,
+                        "title": title,
+                        "history": conversation_history,
+                        "updated_at": datetime.utcnow()
+                    }},
+                    upsert=True
+                )
 
-        # Limpiar respuesta
-        bot_response = re.sub(r'\*\*([^*]+)\*\*', r'<strong>\1</strong>', bot_response)
-        bot_response = re.sub(r'\*([^*]+)\*', r'<em>\1</em>', bot_response)
-        bot_response = re.sub(r'^\*\s+', '', bot_response, flags=re.MULTILINE)
-        bot_response = re.sub(r'\n\*\s+', '\n', bot_response)
-        bot_response = re.sub(r'\*\s*$', '', bot_response)
-        bot_response = re.sub(r'\n\s*\n', '\n', bot_response)
-
-        conversation_history.append({"role": "assistant", "content": bot_response})
-        store_conversation_history(user_id, chat_id, conversation_history)
-
-        resp = jsonify({"response": bot_response})
-        if not request.cookies.get('user_id'):
-            resp.set_cookie('user_id', user_id, max_age=60*60*24*365)
-        return resp
-
-    except requests.exceptions.RequestException as e:
-        return jsonify({"error": f"Error al comunicarse con la API de Gemini: {str(e)}"}), 500
+            return jsonify({"response": bot_response, "chatId": chat_id, "title": title if is_new_chat else None})
+            
     except Exception as e:
-        return jsonify({"error": f"Error interno del servidor: {str(e)}"}), 500
-
-@app.route("/api/chats", methods=["GET"])
-def get_chats():
-    user_id = get_user_id()
-    
-    db = get_db()
-    if db:
-        conversations = db.conversations
-        chats = list(conversations.find({"user_id": user_id}, {"chat_id": 1, "title": 1, "_id": 0}).sort("updated_at", -1))
-        resp = jsonify(chats)
-    else:
-        resp = jsonify([])
-    
-    if not request.cookies.get('user_id'):
-        resp.set_cookie('user_id', user_id, max_age=60*60*24*365)
-    return resp
-
-@app.route("/api/chat/<chat_id>", methods=["GET"])
-def get_chat(chat_id):
-    user_id = get_user_id()
-    
-    history = get_conversation_history(user_id, chat_id)
-    resp = jsonify({"history": history})
-    if not request.cookies.get('user_id'):
-        resp.set_cookie('user_id', user_id, max_age=60*60*24*365)
-    return resp
+        return jsonify({"error": str(e)}), 500
 
 if __name__ == "__main__":
     app.run(debug=True)
