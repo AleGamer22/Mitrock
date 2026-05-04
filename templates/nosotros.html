@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Filosofía - Tamachi Studios S.L.</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@3.4.0/dist/tailwind.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #050505;
+            --text-primary: #ffffff;
+            --text-secondary: #cccccc;
+            --border: #333333;
+        }
+        body {
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            font-family: 'Inter', system-ui, sans-serif;
+        }
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+            opacity: 0.03;
+            z-index: -1;
+        }
+        input, textarea {
+            background: transparent;
+            border: none;
+            border-bottom: 1px solid white;
+            color: white;
+            width: 100%;
+            padding: 8px 0;
+            margin-bottom: 16px;
+        }
+        input:focus, textarea:focus {
+            outline: none;
+            border-bottom: 1px solid #cccccc;
+        }
+    </style>
+</head>
+<body class="min-h-screen">
+    <!-- Navbar -->
+    <nav class="flex justify-between items-center p-6 border-b border-gray-700">
+        <div class="text-2xl font-bold">T</div>
+        <div class="flex space-x-6">
+            <a href="/" class="hover:text-gray-300">Inicio</a>
+            <a href="/servicios" class="hover:text-gray-300">Servicios</a>
+            <a href="/nosotros" class="hover:text-gray-300">Filosofía</a>
+        </div>
+        <a href="/ia" class="bg-white text-black px-4 py-2 rounded hover:bg-gray-200">Tamachi-Diagnostic</a>
+    </nav>
+
+    <!-- Filosofía Section -->
+    <section class="py-20 px-6">
+        <div class="max-w-4xl mx-auto">
+            <h1 class="text-5xl md:text-7xl font-bold text-center mb-16">Filosofía</h1>
+            <p class="text-lg text-gray-400 mb-12 leading-relaxed">
+                Somos Tamachi Studios S.L., un Partner Tecnológico especializado en el trato directo y la resolución ultra-eficiente. Operamos desde Madrid, enfocados en PYMES que necesitan soluciones tecnológicas prácticas y sin complicaciones. Nuestra aproximación combina expertise técnico con un compromiso inquebrantable con la proximidad y la efectividad.
+            </p>
+            <p class="text-lg text-gray-400 mb-12 leading-relaxed">
+                Creemos en la tecnología como herramienta para potenciar negocios, no como un fin en sí misma. Por eso, nos especializamos en infraestructuras sólidas, mantenimientos preventivos y optimizaciones que realmente impactan en la productividad y la seguridad de nuestros clientes.
+            </p>
+        </div>
+    </section>
+
+    <!-- Contacto Section -->
+    <section class="py-20 px-6 bg-gray-900">
+        <div class="max-w-4xl mx-auto">
+            <h2 class="text-4xl font-bold text-center mb-12">Contacto</h2>
+            <div class="grid md:grid-cols-2 gap-12">
+                <div>
+                    <h3 class="text-2xl font-bold mb-4">Información de Contacto</h3>
+                    <p class="text-gray-400 mb-4">Madrid, España</p>
+                    <p class="text-gray-400 mb-4">Email: info@tamachistudios.com</p>
+                    <p class="text-gray-400">Teléfono: +34 600 000 000</p>
+                </div>
+                <div>
+                    <h3 class="text-2xl font-bold mb-4">Envíanos un Mensaje</h3>
+                    <form>
+                        <input type="text" placeholder="Nombre" required>
+                        <input type="email" placeholder="Email" required>
+                        <textarea placeholder="Mensaje" rows="4" required></textarea>
+                        <button type="submit" class="bg-white text-black px-6 py-2 rounded hover:bg-gray-200">Enviar</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="py-8 px-6 border-t border-gray-700 text-center text-gray-500">
+        <p>&copy; 2024 Tamachi Studios S.L. Todos los derechos reservados.</p>
+    </footer>
+</body>
+</html>

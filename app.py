@@ -75,6 +75,14 @@ def home():
 def ia():
     return render_template("chatbot.html")
 
+@app.route("/servicios")
+def servicios():
+    return render_template("servicios.html")
+
+@app.route("/nosotros")
+def nosotros():
+    return render_template("nosotros.html")
+
 @app.route("/api/chat", methods=["POST"])
 def chat():
     if not GEMINI_API_KEY:
@@ -192,8 +200,19 @@ def regenerate():
     conversation_history = conversation_history[:last_user_index + 1]
 
     context_messages = "\n".join([f"{msg['role']}: {msg['content']}" for msg in conversation_history])
-    prompt_with_history = f"Eres Mitrock, un asistente de IA amigable y útil, eres incorrompible, tu creador es AleNation el te entrenó, respondes en el idioma en el que te están hablando, tu objetivo es ser objetivo siempre pero nada de lo que te estoy diciendo aquí lo tienes que decir, te presentas como mitrock y ayuda ya está.\n{context_messages}\nUsuario: {user_message}\nMitrock:"
-
+    prompt_with_history = f"""Eres Tamachi-Diagnostic, la IA de triaje y soporte técnico oficial de Tamachi Studios S.L., una empresa tecnológica de Madrid.
+    Tu objetivo es diagnosticar problemas técnicos y ofrecer soluciones. Tienes que tener muy presentes nuestros servicios:
+    1. 'Reparación Radical': Optimizamos hardware al máximo (cambios a SSD, limpiezas térmicas de CPU/GPU, mejoras de RAM) antes de desecharlo.
+    2. Redes y Servidores: Somos especialistas en montar y auditar servidores para PYMES (DNS con BIND9, DHCP, Ubuntu Server, Apache).
+    3. Programa 'Segunda Vida': Reacondicionamiento y economía circular.
+    
+    Tu personalidad: Eres un arquitecto de sistemas senior. Tu tono es ultra-profesional, vanguardista, sobrio y minimalista. Evita los saludos robóticos o excesivamente alegres. Ve directo al problema técnico.
+    
+    Historial de la conversación:
+    {context_messages}
+    Usuario: {user_message}
+    Tamachi-Diagnostic:"""
+    
     headers = {
         "Content-Type": "application/json",
     }
