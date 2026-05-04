@@ -30,35 +30,58 @@
             opacity: 0.03;
             z-index: -1;
         }
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        .animate-fade-in-up {
+            animation: fadeInUp 0.8s ease-out;
+        }
+        .transition-all {
+            transition: all 0.3s ease;
+        }
+        nav a:hover {
+            color: var(--text-secondary);
+        }
+        .service-card:hover {
+            border-color: var(--text-secondary);
+            transform: translateY(-5px);
+        }
     </style>
 </head>
 <body class="min-h-screen">
     <!-- Navbar -->
-    <nav class="flex justify-between items-center p-6 border-b border-gray-700">
+    <nav class="flex justify-between items-center p-6 border-b border-gray-700 transition-all">
         <div class="text-2xl font-bold">T</div>
         <div class="flex space-x-6">
-            <a href="/" class="hover:text-gray-300">Inicio</a>
-            <a href="/servicios" class="hover:text-gray-300">Servicios</a>
-            <a href="/nosotros" class="hover:text-gray-300">Filosofía</a>
+            <a href="/" class="hover:text-gray-300 transition-all">Inicio</a>
+            <a href="/servicios" class="hover:text-gray-300 transition-all">Servicios</a>
+            <a href="/nosotros" class="hover:text-gray-300 transition-all">Filosofía</a>
         </div>
-        <a href="/ia" class="bg-white text-black px-4 py-2 rounded hover:bg-gray-200">Tamachi-Diagnostic</a>
+        <a href="/ia" class="bg-white text-black px-4 py-2 rounded hover:bg-gray-200 transition-all">Tamachi-Diagnostic</a>
     </nav>
 
     <!-- Servicios Section -->
-    <section class="py-20 px-6">
+    <section class="py-20 px-6 animate-fade-in-up">
         <div class="max-w-6xl mx-auto">
             <h1 class="text-5xl md:text-7xl font-bold text-center mb-16">Servicios</h1>
 
             <!-- Sistemas y Redes -->
-            <div class="mb-20">
+            <div class="mb-20 animate-fade-in-up">
                 <h2 class="text-4xl font-bold mb-8">Sistemas y Redes</h2>
                 <p class="text-lg text-gray-400 mb-8">Especialistas en auditoría y despliegue. Configuración de servidores Linux (Ubuntu, Apache2), servicios DNS (BIND9), DHCP y FTP corporativo.</p>
                 <div class="grid md:grid-cols-2 gap-8">
-                    <div class="p-8 border border-gray-700">
+                    <div class="p-8 border border-gray-700 transition-all service-card">
                         <h3 class="text-2xl font-bold mb-4">Auditoría de Redes</h3>
                         <p class="text-gray-400">Evaluación completa de su infraestructura de red para identificar vulnerabilidades y optimizaciones.</p>
                     </div>
-                    <div class="p-8 border border-gray-700">
+                    <div class="p-8 border border-gray-700 transition-all service-card">
                         <h3 class="text-2xl font-bold mb-4">Despliegue de Servidores</h3>
                         <p class="text-gray-400">Instalación y configuración de servidores Linux con servicios esenciales para su negocio.</p>
                     </div>
@@ -66,15 +89,15 @@
             </div>
 
             <!-- Reparación Radical -->
-            <div class="mb-20">
+            <div class="mb-20 animate-fade-in-up">
                 <h2 class="text-4xl font-bold mb-8">Reparación Radical</h2>
                 <p class="text-lg text-gray-400 mb-8">No tires tu equipo. Lo llevamos al límite. Actualizaciones a discos NVMe/SSD, mantenimiento térmico de CPU/GPU y ampliación de memoria.</p>
                 <div class="grid md:grid-cols-2 gap-8">
-                    <div class="p-8 border border-gray-700">
+                    <div class="p-8 border border-gray-700 transition-all service-card">
                         <h3 class="text-2xl font-bold mb-4">Actualizaciones de Hardware</h3>
                         <p class="text-gray-400">Mejora el rendimiento de tus equipos con componentes de última generación.</p>
                     </div>
-                    <div class="p-8 border border-gray-700">
+                    <div class="p-8 border border-gray-700 transition-all service-card">
                         <h3 class="text-2xl font-bold mb-4">Mantenimiento Extremo</h3>
                         <p class="text-gray-400">Limpieza profunda, optimización térmica y calibración para máxima durabilidad.</p>
                     </div>
@@ -82,15 +105,15 @@
             </div>
 
             <!-- Programa Segunda Vida -->
-            <div>
+            <div class="animate-fade-in-up">
                 <h2 class="text-4xl font-bold mb-8">Programa Segunda Vida</h2>
                 <p class="text-lg text-gray-400 mb-8">Economía circular. Reacondicionamiento de equipos empresariales y reducción de la brecha digital.</p>
                 <div class="grid md:grid-cols-2 gap-8">
-                    <div class="p-8 border border-gray-700">
+                    <div class="p-8 border border-gray-700 transition-all service-card">
                         <h3 class="text-2xl font-bold mb-4">Reacondicionamiento</h3>
                         <p class="text-gray-400">Restauración completa de equipos usados para darles una nueva vida útil.</p>
                     </div>
-                    <div class="p-8 border border-gray-700">
+                    <div class="p-8 border border-gray-700 transition-all service-card">
                         <h3 class="text-2xl font-bold mb-4">Reducción de Brecha Digital</h3>
                         <p class="text-gray-400">Acceso a tecnología asequible para empresas que no pueden invertir en equipos nuevos.</p>
                     </div>

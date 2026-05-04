@@ -30,47 +30,70 @@
             opacity: 0.03;
             z-index: -1;
         }
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        .animate-fade-in-up {
+            animation: fadeInUp 0.8s ease-out;
+        }
+        .transition-all {
+            transition: all 0.3s ease;
+        }
+        nav a:hover {
+            color: var(--text-secondary);
+        }
+        .card:hover {
+            border-color: var(--text-secondary);
+            transform: translateY(-5px);
+        }
     </style>
 </head>
 <body class="min-h-screen">
     <!-- Navbar -->
-    <nav class="flex justify-between items-center p-6 border-b border-gray-700">
+    <nav class="flex justify-between items-center p-6 border-b border-gray-700 transition-all">
         <div class="text-2xl font-bold">T</div>
         <div class="flex space-x-6">
-            <a href="/" class="hover:text-gray-300">Inicio</a>
-            <a href="/servicios" class="hover:text-gray-300">Servicios</a>
-            <a href="/nosotros" class="hover:text-gray-300">Filosofía</a>
+            <a href="/" class="hover:text-gray-300 transition-all">Inicio</a>
+            <a href="/servicios" class="hover:text-gray-300 transition-all">Servicios</a>
+            <a href="/nosotros" class="hover:text-gray-300 transition-all">Filosofía</a>
         </div>
-        <a href="/ia" class="bg-white text-black px-4 py-2 rounded hover:bg-gray-200">Tamachi-Diagnostic</a>
+        <a href="/ia" class="bg-white text-black px-4 py-2 rounded hover:bg-gray-200 transition-all">Tamachi-Diagnostic</a>
     </nav>
 
     <!-- Hero Section -->
-    <section class="text-center py-20 px-6">
+    <section class="text-center py-20 px-6 animate-fade-in-up">
         <h1 class="text-6xl md:text-8xl font-bold mb-6">Vanguardia Tecnológica de Proximidad</h1>
         <p class="text-xl md:text-2xl text-gray-400 max-w-4xl mx-auto">Infraestructura, redes y optimización radical de hardware para PYMES.</p>
     </section>
 
     <!-- Tamachi-Diagnostic Section -->
-    <section class="py-16 px-6 bg-gray-900">
+    <section class="py-16 px-6 bg-gray-900 animate-fade-in-up">
         <div class="max-w-4xl mx-auto text-center">
             <h2 class="text-4xl font-bold mb-4">Tamachi-Diagnostic</h2>
             <p class="text-lg text-gray-400 mb-8">Nuestra IA de triaje técnico resuelve el 70% de incidencias remotamente. Prueba nuestra plataforma de diagnóstico inteligente.</p>
-            <a href="/ia" class="bg-white text-black px-8 py-4 text-lg rounded hover:bg-gray-200">Acceder al Diagnóstico IA</a>
+            <a href="/ia" class="bg-white text-black px-8 py-4 text-lg rounded hover:bg-gray-200 transition-all">Acceder al Diagnóstico IA</a>
         </div>
     </section>
 
     <!-- Pilares Section -->
-    <section class="py-20 px-6">
+    <section class="py-20 px-6 animate-fade-in-up">
         <div class="max-w-6xl mx-auto grid md:grid-cols-3 gap-8">
-            <a href="/servicios" class="block p-8 border border-gray-700 hover:border-gray-500 transition">
+            <a href="/servicios" class="block p-8 border border-gray-700 hover:border-gray-500 transition-all card">
                 <h3 class="text-2xl font-bold mb-4">Reparación Radical</h3>
                 <p class="text-gray-400">No tires tu equipo. Lo llevamos al límite con actualizaciones y mantenimiento extremo.</p>
             </a>
-            <a href="/servicios" class="block p-8 border border-gray-700 hover:border-gray-500 transition">
+            <a href="/servicios" class="block p-8 border border-gray-700 hover:border-gray-500 transition-all card">
                 <h3 class="text-2xl font-bold mb-4">Redes</h3>
                 <p class="text-gray-400">Auditoría y despliegue de infraestructuras de red corporativas.</p>
             </a>
-            <a href="/servicios" class="block p-8 border border-gray-700 hover:border-gray-500 transition">
+            <a href="/servicios" class="block p-8 border border-gray-700 hover:border-gray-500 transition-all card">
                 <h3 class="text-2xl font-bold mb-4">Segunda Vida</h3>
                 <p class="text-gray-400">Economía circular: reacondicionamiento y reducción de la brecha digital.</p>
             </a>

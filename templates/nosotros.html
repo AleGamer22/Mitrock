@@ -30,6 +30,25 @@
             opacity: 0.03;
             z-index: -1;
         }
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        .animate-fade-in-up {
+            animation: fadeInUp 0.8s ease-out;
+        }
+        .transition-all {
+            transition: all 0.3s ease;
+        }
+        nav a:hover {
+            color: var(--text-secondary);
+        }
         input, textarea {
             background: transparent;
             border: none;
@@ -38,27 +57,32 @@
             width: 100%;
             padding: 8px 0;
             margin-bottom: 16px;
+            transition: border-bottom 0.3s ease;
         }
         input:focus, textarea:focus {
             outline: none;
-            border-bottom: 1px solid #cccccc;
+            border-bottom: 1px solid var(--text-secondary);
+        }
+        button:hover {
+            background-color: var(--text-secondary);
+            color: black;
         }
     </style>
 </head>
 <body class="min-h-screen">
     <!-- Navbar -->
-    <nav class="flex justify-between items-center p-6 border-b border-gray-700">
+    <nav class="flex justify-between items-center p-6 border-b border-gray-700 transition-all">
         <div class="text-2xl font-bold">T</div>
         <div class="flex space-x-6">
-            <a href="/" class="hover:text-gray-300">Inicio</a>
-            <a href="/servicios" class="hover:text-gray-300">Servicios</a>
-            <a href="/nosotros" class="hover:text-gray-300">Filosofía</a>
+            <a href="/" class="hover:text-gray-300 transition-all">Inicio</a>
+            <a href="/servicios" class="hover:text-gray-300 transition-all">Servicios</a>
+            <a href="/nosotros" class="hover:text-gray-300 transition-all">Filosofía</a>
         </div>
-        <a href="/ia" class="bg-white text-black px-4 py-2 rounded hover:bg-gray-200">Tamachi-Diagnostic</a>
+        <a href="/ia" class="bg-white text-black px-4 py-2 rounded hover:bg-gray-200 transition-all">Tamachi-Diagnostic</a>
     </nav>
 
     <!-- Filosofía Section -->
-    <section class="py-20 px-6">
+    <section class="py-20 px-6 animate-fade-in-up">
         <div class="max-w-4xl mx-auto">
             <h1 class="text-5xl md:text-7xl font-bold text-center mb-16">Filosofía</h1>
             <p class="text-lg text-gray-400 mb-12 leading-relaxed">
@@ -71,7 +95,7 @@
     </section>
 
     <!-- Contacto Section -->
-    <section class="py-20 px-6 bg-gray-900">
+    <section class="py-20 px-6 bg-gray-900 animate-fade-in-up">
         <div class="max-w-4xl mx-auto">
             <h2 class="text-4xl font-bold text-center mb-12">Contacto</h2>
             <div class="grid md:grid-cols-2 gap-12">
@@ -87,7 +111,7 @@
                         <input type="text" placeholder="Nombre" required>
                         <input type="email" placeholder="Email" required>
                         <textarea placeholder="Mensaje" rows="4" required></textarea>
-                        <button type="submit" class="bg-white text-black px-6 py-2 rounded hover:bg-gray-200">Enviar</button>
+                        <button type="submit" class="bg-white text-black px-6 py-2 rounded transition-all">Enviar</button>
                     </form>
                 </div>
             </div>
