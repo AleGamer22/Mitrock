@@ -1,9 +1,8 @@
-from flask import Flask, render_template, request, jsonify, session
+from flask import Flask, render_template, request, jsonify, session, make_response
 import requests
 import os
 import re
 from dotenv import load_dotenv
-from pymongo import MongoClient
 import uuid
 from datetime import datetime
 
@@ -18,37 +17,36 @@ GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini
 MONGO_URI = os.getenv("MONGO_URI")
 DB_NAME = "chatbot_history"
 
-if not GEMINI_API_KEY:
-    print("Error: La variable de entorno GEMINI_API_KEY no está definida.")
-
-client = None
-db = None
-conversations = None
-if MONGO_URI:
-    try:
-        client = MongoClient(MONGO_URI)
-        db = client[DB_NAME]
-        conversations = db.conversations
-        print("Conexión a MongoDB Atlas establecida.")
-    except Exception as e:
-        print(f"Error al conectar a MongoDB: {e}")
-        print("La funcionalidad de memoria persistente estará desactivada.")
-        MONGO_URI = None
-else:
-    print("Advertencia: La variable de entorno MONGO_URI no está definida. La memoria persistente estará desactivada.")
+def get_db():
+    from pymongo import MongoClient
+    if MONGO_URI:
+        try:
+            client = MongoClient(MONGO_URI, serverSelectionTimeoutMS=5000)
+            db = client[DB_NAME]
+            # Test connection
+            db.command('ping')
+            return db
+        except Exception as e:
+            print(f"MongoDB connection failed: {e}")
+            return None
+    return None
 
 def get_conversation_history(user_id, chat_id):
-    if conversations:
+    db = get_db()
+    if db:
+        conversations = db.conversations
         conversation_data = conversations.find_one({"user_id": user_id, "chat_id": chat_id})
         if conversation_data and "history" in conversation_data:
             return conversation_data["history"]
         else:
             return []
     else:
-        return session.get(f"conversation_history_{chat_id}", [])
+        return []
 
 def store_conversation_history(user_id, chat_id, history, title=None):
-    if conversations:
+    db = get_db()
+    if db:
+        conversations = db.conversations
         update_data = {
             "history": history,
             "updated_at": datetime.utcnow()
@@ -60,9 +58,14 @@ def store_conversation_history(user_id, chat_id, history, title=None):
             {"$set": update_data},
             upsert=True
         )
-    else:
-        session[f"conversation_history_{chat_id}"] = history
-        session.modified = True
+
+def get_user_id():
+    # For serverless, use a cookie instead of session
+    user_id = request.cookies.get('user_id')
+    if not user_id:
+        user_id = str(uuid.uuid4())
+        # Will set in response
+    return user_id
 
 @app.route("/")
 def home():
@@ -82,10 +85,7 @@ def chat():
     if not user_message:
         return jsonify({"error": "Mensaje del usuario no proporcionado"}), 400
 
-    user_id = session.get("user_id")
-    if not user_id:
-        user_id = os.urandom(16).hex()
-        session["user_id"] = user_id
+    user_id = get_user_id()
 
     if not chat_id:
         chat_id = str(uuid.uuid4())
@@ -143,7 +143,10 @@ def chat():
         conversation_history.append({"role": "assistant", "content": bot_response})
         store_conversation_history(user_id, chat_id, conversation_history)
 
-        return jsonify({"response": bot_response, "chatId": chat_id})
+        resp = jsonify({"response": bot_response, "chatId": chat_id})
+        if not request.cookies.get('user_id'):
+            resp.set_cookie('user_id', user_id, max_age=60*60*24*365)  # 1 year
+        return resp
 
     except requests.exceptions.RequestException as e:
         return jsonify({"error": f"Error al comunicarse con la API de Gemini: {str(e)}"}), 500
@@ -152,11 +155,14 @@ def chat():
 
 @app.route("/api/reset_chat", methods=["POST"])
 def reset_chat():
-    user_id = session.get("user_id")
-    if user_id:
-        store_conversation_history(user_id, [], True)
-    session.pop("conversation_history", None)
-    return jsonify({"status": "Chat reiniciado"})
+    user_id = get_user_id()
+    chat_id = request.json.get("chatId")
+    if user_id and chat_id:
+        store_conversation_history(user_id, chat_id, [])
+    resp = jsonify({"status": "Chat reiniciado"})
+    if not request.cookies.get('user_id'):
+        resp.set_cookie('user_id', user_id, max_age=60*60*24*365)
+    return resp
 
 @app.route("/api/regenerate", methods=["POST"])
 def regenerate():
@@ -168,10 +174,7 @@ def regenerate():
     if not user_message or not chat_id:
         return jsonify({"error": "Mensaje del usuario o chatId no proporcionado"}), 400
 
-    user_id = session.get("user_id")
-    if not user_id:
-        user_id = os.urandom(16).hex()
-        session["user_id"] = user_id
+    user_id = get_user_id()
 
     conversation_history = get_conversation_history(user_id, chat_id)
 
@@ -232,7 +235,10 @@ def regenerate():
         conversation_history.append({"role": "assistant", "content": bot_response})
         store_conversation_history(user_id, chat_id, conversation_history)
 
-        return jsonify({"response": bot_response})
+        resp = jsonify({"response": bot_response})
+        if not request.cookies.get('user_id'):
+            resp.set_cookie('user_id', user_id, max_age=60*60*24*365)
+        return resp
 
     except requests.exceptions.RequestException as e:
         return jsonify({"error": f"Error al comunicarse con la API de Gemini: {str(e)}"}), 500
@@ -241,24 +247,29 @@ def regenerate():
 
 @app.route("/api/chats", methods=["GET"])
 def get_chats():
-    user_id = session.get("user_id")
-    if not user_id:
-        return jsonify([])
+    user_id = get_user_id()
     
-    if conversations:
+    db = get_db()
+    if db:
+        conversations = db.conversations
         chats = list(conversations.find({"user_id": user_id}, {"chat_id": 1, "title": 1, "_id": 0}).sort("updated_at", -1))
-        return jsonify(chats)
+        resp = jsonify(chats)
     else:
-        return jsonify([])
+        resp = jsonify([])
+    
+    if not request.cookies.get('user_id'):
+        resp.set_cookie('user_id', user_id, max_age=60*60*24*365)
+    return resp
 
 @app.route("/api/chat/<chat_id>", methods=["GET"])
 def get_chat(chat_id):
-    user_id = session.get("user_id")
-    if not user_id:
-        return jsonify({"error": "Usuario no identificado"}), 400
+    user_id = get_user_id()
     
     history = get_conversation_history(user_id, chat_id)
-    return jsonify({"history": history})
+    resp = jsonify({"history": history})
+    if not request.cookies.get('user_id'):
+        resp.set_cookie('user_id', user_id, max_age=60*60*24*365)
+    return resp
 
 @app.route("/api/reset_chat", methods=["POST"])
 def reset_chat():
