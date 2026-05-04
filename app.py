@@ -271,13 +271,5 @@ def get_chat(chat_id):
         resp.set_cookie('user_id', user_id, max_age=60*60*24*365)
     return resp
 
-@app.route("/api/reset_chat", methods=["POST"])
-def reset_chat():
-    user_id = session.get("user_id")
-    chat_id = request.json.get("chatId")
-    if user_id and chat_id:
-        store_conversation_history(user_id, chat_id, [])
-    return jsonify({"status": "Chat reiniciado"})
-
 if __name__ == "__main__":
     app.run(debug=True)
