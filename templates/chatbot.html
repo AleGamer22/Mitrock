@@ -72,6 +72,20 @@
             background: linear-gradient(90deg, rgba(255,255,255,0.01), rgba(255,255,255,0.00));
         }
 
+        .back-button {
+            color: var(--muted);
+            text-decoration: none;
+            font-size: 0.9rem;
+            padding: 8px 12px;
+            border-radius: 6px;
+            transition: background-color 0.2s ease;
+        }
+
+        .back-button:hover {
+            background: rgba(255,255,255,0.05);
+            color: var(--muted-strong);
+        }
+
         #brand h1 {
             margin: 0;
             font-size: 1.05rem;
@@ -269,6 +283,7 @@
 <body>
     <div id="chat-container">
         <header id="chat-header">
+            <a href="/" class="back-button">← Volver</a>
             <div id="brand">
                 <h1>Tamachi-Diagnostic // IA de Triaje</h1>
             </div>
